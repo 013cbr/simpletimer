@@ -1,0 +1,106 @@
+<!doctype html>
+<html>
+<head>
+	<!--Import Google Icon Font-->
+	<link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+	<!-- Materialize: Compiled and minified CSS -->
+	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/0.100.1/css/materialize.min.css">
+
+	<!--Import jQuery before materialize.js-->
+	<script type="text/javascript" src="https://code.jquery.com/jquery-3.2.1.min.js"></script>
+	<!-- Materialize: Compiled and minified JavaScript -->
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/0.100.1/js/materialize.min.js"></script>
+		     
+	<!-- VUE resource: -->
+	<script src="https://unpkg.com/vue@2.4.2/dist/vue.js"></script>
+
+	<link href="print.css" rel="stylesheet">
+
+	<style>
+		/*[v-cloak] { display: none; }*/
+		.nowrap {
+			white-space: nowrap;
+		}
+
+		i.icon-button,
+		tr.task td i.material-icons {
+			cursor: pointer;
+		}
+	</style>
+</head>
+<body>
+	<div class="">
+
+		<section class="timerapp">
+			<div class="card-panel light-green lighten-2 no-print" v-if="timedTask">
+				<div class="row">
+					<div class="col s12 center-align white-text">
+						<h1>{{ timedTask.title }}</h1>
+						<h2>{{ timerReadable }}</h2>
+					</div>
+				</div>
+				<div class="row">
+					<div class="col s12 center-align white-text">
+						<i @click="stopTimer()" class="icon-button large material-icons">pause_circle_outline</i>
+					</div>
+				</div>
+			</div>
+
+			<div class="row">
+				<div class="col s12 green lighten-5">
+					<h2>tasks</h2>
+					<input class="new-task no-print"
+						autofocus autocomplete="off"
+						placeholder="Specify a task"
+						v-model="newTask"
+						@keyup.enter="addTask">
+				</div>
+			</div>
+
+			<section class="tasks" v-show="tasks.length" v-cloak>
+				<table class="bordered highlight">
+					<thead>
+						<tr>
+							<th>name</th>
+							<th></th>
+							<th class="right-align">total</th>
+						</tr>
+					</thead>
+					<tbody>
+						<tr v-for="task in tasks"
+							class="task"
+							:key="task.id"
+							:class="">
+								<td>
+									<span v-show="task != editedTask" @dblclick="editTask(task)" style="font-weight: 700;">{{ task.title }}</span>
+									<input class="edit" type="text"
+										v-show="task == editedTask" 
+										v-model="task.title"
+										v-todo-focus="task == editedTask"
+										@blur="doneEditing(task)"
+										@keyup.enter="doneEditing(task)"
+										@keyup.esc="cancelEditing(task)">
+								</td>
+								<td>
+									<i @click="startTimer(task)" class="material-icons no-print">play_circle_outline</i>
+									<i @click="removeTask(task)" class="material-icons no-print">cancel</i>
+								</td>
+								<td class="right-align">{{ task.timeSpentReadable }}</td>
+						</tr>
+					</tbody>
+					<!--tfoot>
+						<tr>
+							<td colspan="2" class="right-align"><strong>total</strong></td>
+							<td class="right-align">{{ totalHoursSpentQuarterWise }}</td>
+						</tr>
+					</tfoot-->
+				</table>
+			</section>
+		</section>
+
+	</div><!-- /.container -->
+
+	<script src="weekday.js"></script>
+	<script src="timer.js"></script>
+</body>
+</html>
