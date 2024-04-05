@@ -26,6 +26,14 @@
 		tr.task td i.material-icons {
 			cursor: pointer;
 		}
+
+		.todays-date {
+			display: block;
+			position: absolute;
+			font-size: 1em;
+			right: 10px;
+			top: 10px;
+		}
 	</style>
 </head>
 <body>
@@ -48,6 +56,7 @@
 
 			<div class="row">
 				<div class="col s12 green lighten-5">
+					<span class="todays-date">{{ todaysDate }}</span>
 					<h2>tasks</h2>
 					<input class="new-task no-print"
 						autofocus autocomplete="off"
@@ -64,6 +73,7 @@
 							<th>name</th>
 							<th></th>
 							<th class="right-align">total</th>
+							<th></th>
 						</tr>
 					</thead>
 					<tbody>
@@ -83,9 +93,13 @@
 								</td>
 								<td>
 									<i @click="startTimer(task)" class="material-icons no-print">play_circle_outline</i>
-									<i @click="removeTask(task)" class="material-icons no-print">cancel</i>
+									<i @click="addHour(task)" title="add 1h" class="material-icons no-print">add_circle_outline</i>
+									<i @click="removeHour(task)" title="remove 1h" class="material-icons no-print">remove_circle_outline</i>
+									<i @click="addQuarter(task)" title="add 15m" class="material-icons no-print">zoom_in</i>
+									<i @click="removeQuarter(task)" title="remove 15m" class="material-icons no-print">zoom_out</i>
 								</td>
 								<td class="right-align">{{ task.timeSpentReadable }}</td>
+								<td class="right-align" style="padding-right: 20px;"><i @click="removeTask(task)" class="material-icons no-print">cancel</i></td>
 						</tr>
 					</tbody>
 					<!--tfoot>
@@ -100,7 +114,6 @@
 
 	</div><!-- /.container -->
 
-	<script src="weekday.js"></script>
 	<script src="timer.js"></script>
 </body>
 </html>
