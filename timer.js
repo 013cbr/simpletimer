@@ -59,6 +59,8 @@ var app = new Vue({
 			if (confirmation) {
 				this.tasks.splice(this.tasks.indexOf(task), 1);
 			}
+
+			this.updateTotal();
 		},
 
 		addHour: function (task) {
