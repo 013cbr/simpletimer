@@ -9,6 +9,7 @@ var app = new Vue({
 		timedTask: null,
 		timerReadable: '',
 		timerInterval: null,
+		totalReadable: '',
 		todaysDate: new Date().toLocaleDateString(),
 		startedAt: 0
 	},
@@ -63,11 +64,15 @@ var app = new Vue({
 		addHour: function (task) {
 			task.secondsSpent += 3600;
 			task.timeSpentReadable = this.formatSecondsAsReadable(task.secondsSpent);
+
+			this.updateTotal();
 		},
 
 		addQuarter: function (task) {
 			task.secondsSpent += 900;
 			task.timeSpentReadable = this.formatSecondsAsReadable(task.secondsSpent);
+
+			this.updateTotal();
 		},
 
 		removeHour: function (task) {
@@ -78,6 +83,8 @@ var app = new Vue({
 			}
 
 			task.timeSpentReadable = this.formatSecondsAsReadable(task.secondsSpent);
+
+			this.updateTotal();
 		},
 
 		removeQuarter: function (task) {
@@ -88,6 +95,8 @@ var app = new Vue({
 			}
 
 			task.timeSpentReadable = this.formatSecondsAsReadable(task.secondsSpent);
+
+			this.updateTotal();
 		},
 
 		startTimer: function (task) {
@@ -139,6 +148,21 @@ var app = new Vue({
                 this.startedAt = 0;
 				this.timerReadable = '';
 			}
+
+			this.updateTotal();
+		},
+
+		updateTotal: function () {
+			var totalSeconds = 0;
+			this.tasks.forEach(function (item) {
+				totalSeconds += item.secondsSpent;
+			});
+
+			this.totalReadable = this.formatSecondsAsReadable(totalSeconds);
+		},
+
+		print: function () {
+			window.print();
 		},
 	},	// end of methods
 
