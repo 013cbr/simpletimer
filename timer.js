@@ -164,6 +164,11 @@ var app = new Vue({
 		},
 
 		print: function () {
+			const d = new Date();
+			let month = (d.getMonth() + 1).toString();
+			month = month.length < 2 ? '0' + month : month;
+
+			navigator.clipboard.writeText(d.getFullYear() + '' + month + '' + d.getDate());
 			window.print();
 		},
 	},	// end of methods
