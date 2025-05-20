@@ -70,8 +70,11 @@ var app = new Vue({
 			this.updateTotal();
 		},
 
+		// round up to the nearest 15 minutes
 		addQuarter: function (task) {
 			task.secondsSpent += 900;
+			task.secondsSpent = Math.floor(task.secondsSpent / 900) * 900;
+
 			task.timeSpentReadable = this.formatSecondsAsReadable(task.secondsSpent);
 
 			this.updateTotal();
@@ -89,8 +92,10 @@ var app = new Vue({
 			this.updateTotal();
 		},
 
+		// round down to the nearest 15 minutes
 		removeQuarter: function (task) {
 			task.secondsSpent -= 900;
+			task.secondsSpent = Math.ceil(task.secondsSpent / 900) * 900;
 
             if (task.secondsSpent < 0) {
 				task.secondsSpent = 0;
