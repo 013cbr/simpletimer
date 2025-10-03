@@ -169,13 +169,59 @@ var app = new Vue({
 		},
 
 		print: function () {
+			this.updateStorage();
+			// return;
+
 			const d = new Date();
+			// make sure month is always two digits
 			let month = (d.getMonth() + 1).toString();
 			month = month.length < 2 ? '0' + month : month;
+			// make sure day is always two digits
+			let day = d.getDate().toString();
+			day = day.length < 2 ? '0' + day : day;
 
-			navigator.clipboard.writeText(d.getFullYear() + '' + month + '' + d.getDate());
+			navigator.clipboard.writeText(d.getFullYear() + '' + month + '' + day);
 			window.print();
 		},
+
+		jiraLink: function (taskTitle) {
+			// Get first match of regex pattern for Jira key
+			const matches = taskTitle.match(/^[A-Za-z]{3,10}-\d{1,10}/);
+			if (matches !== null) {
+				let key = matches[0];
+
+				// Return the Jira URL with the matched key
+				return '<a href="https://nedbase.atlassian.net/browse/' + key + '" target="_blank">' + key + '</a>' + taskTitle.substring(key.length);
+			}
+
+			return taskTitle;
+		},
+
+		openStorage: function () {
+			let weekdays = localStorage.weekdays ? JSON.parse(localStorage.weekdays) : {};
+			console.log(weekdays[this.todaysDate]);
+
+			if (undefined !== weekdays[this.todaysDate]) {
+				// if today is already in the list, load it
+				this.tasks = weekdays[this.todaysDate].tasks;
+			}
+		},
+
+		updateStorage: function () {
+			let weekdays = localStorage.weekdays ? JSON.parse(localStorage.weekdays) : {};
+
+			weekdays[this.todaysDate] = {
+				tasks: this.tasks
+			};
+
+			localStorage.weekdays = JSON.stringify(weekdays);
+		},
+
+		clearStorage: function () {
+			if (confirm('Are you sure you want to clear the storage?')) {
+				localStorage.clear();
+			}
+		}
 	},	// end of methods
 
 	directives: {

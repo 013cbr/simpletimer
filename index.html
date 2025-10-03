@@ -40,9 +40,44 @@
 			position: absolute;
 			font-size: 1em;
 			right: 90px;
-			top: 10px;
+			top: 6px;
 			cursor: pointer;
-			text-decoration: underline;
+			text-decoration: none;
+			opacity: 0.6;
+			transition: all ease-in-out 0.2s;
+			padding: 3px 5px;
+			background: transparent;
+		}
+
+		.print-button:hover {
+			opacity: 1.0;
+			color: #fff;
+			background: #26a69a;
+		}
+
+		.storage-button-container {
+			/*display: block;*/
+			display: none;
+			position: absolute;
+			font-size: 1em;
+			left: 1px;
+			top: 1px;
+		}
+
+		.storage-button {
+			cursor: pointer;
+			text-decoration: none;
+			transition: all ease-in-out 0.2s;
+			color: #26a69a;
+			opacity: 0.6;
+			padding: 3px 5px;
+			background: transparent;
+		}
+
+		.storage-button:hover {
+			opacity: 1.0;
+			color: #fff;
+			background: #26a69a;
 		}
 	</style>
 </head>
@@ -50,6 +85,12 @@
 	<div class="">
 
 		<section class="timerapp">
+			<div class="storage-button-container">
+				<span class="storage-button" @click="openStorage()">load</span>
+				<span class="storage-button" @click="updateStorage()">store</span>
+				<span class="storage-button" @click="clearStorage()">reset</span>
+			</div>
+
 			<div class="card-panel light-green lighten-2 no-print" v-if="timedTask">
 				<div class="row">
 					<div class="col s12 center-align white-text">
@@ -93,7 +134,7 @@
 							:key="task.id"
 							:class="">
 								<td>
-									<span v-show="task != editedTask" @dblclick="editTask(task)" style="font-weight: 700;">{{ task.title }}</span>
+									<span v-show="task != editedTask" @dblclick="editTask(task)" style="font-weight: 700;" v-html="jiraLink(task.title)"></span>
 									<input class="edit" type="text"
 										v-show="task == editedTask" 
 										v-model="task.title"
@@ -102,21 +143,21 @@
 										@keyup.enter="doneEditing(task)"
 										@keyup.esc="cancelEditing(task)">
 								</td>
-								<td>
+								<td class="nowrap">
 									<i @click="startTimer(task)" class="material-icons no-print">play_circle_outline</i>
 									<i @click="addHour(task)" title="add 1h" class="material-icons no-print">add_circle_outline</i>
 									<i @click="removeHour(task)" title="remove 1h" class="material-icons no-print">remove_circle_outline</i>
 									<i @click="addQuarter(task)" title="add 15m" class="material-icons no-print">zoom_in</i>
 									<i @click="removeQuarter(task)" title="remove 15m" class="material-icons no-print">zoom_out</i>
 								</td>
-								<td class="right-align">{{ task.timeSpentReadable }}</td>
+								<td class="right-align nowrap">{{ task.timeSpentReadable }}</td>
 								<td class="right-align" style="padding-right: 20px;"><i @click="removeTask(task)" class="material-icons no-print">cancel</i></td>
 						</tr>
 					</tbody>
 					<tfoot>
 						<tr>
 							<td colspan="2" class="right-align"><strong>cumulative</strong></td>
-							<td class="right-align">{{ totalReadable }}</td>
+							<td class="right-align nowrap">{{ totalReadable }}</td>
 						</tr>
 					</tfoot>
 				</table>
