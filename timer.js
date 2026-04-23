@@ -1,3 +1,29 @@
+// ISO 8601 week number (week starts Monday, week 1 contains the first Thursday).
+function isoWeekNumber(date) {
+	const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
+	const dayNum = d.getUTCDay() || 7;
+	d.setUTCDate(d.getUTCDate() + 4 - dayNum);
+	const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
+	return Math.ceil((((d - yearStart) / 86400000) + 1) / 7);
+}
+
+function loadJiraSubdomain() {
+	const stored = localStorage.getItem('simpletimer.jiraSubdomain');
+	if (stored !== null) return stored;
+
+	// one-time migration from the old full-URL key
+	const oldUrl = localStorage.getItem('simpletimer.jiraBaseUrl');
+	if (oldUrl) {
+		const m = oldUrl.match(/^https?:\/\/([^./]+)\.atlassian\.net\/browse\/?$/i);
+		localStorage.removeItem('simpletimer.jiraBaseUrl');
+		if (m) {
+			localStorage.setItem('simpletimer.jiraSubdomain', m[1]);
+			return m[1];
+		}
+	}
+	return '';
+}
+
 var app = new Vue({
 	// app initial state
 	data: {
@@ -11,7 +37,22 @@ var app = new Vue({
 		timerInterval: null,
 		totalReadable: '',
 		todaysDate: new Date().toLocaleDateString(),
-		startedAt: 0
+		todaysWeek: isoWeekNumber(new Date()),
+		startedAt: 0,
+		jiraSubdomain: loadJiraSubdomain(),
+		jiraSubdomainDraft: '',
+		settingsOpen: false
+	},
+	computed: {
+		jiraBaseUrl: function () {
+			return this.jiraSubdomain
+				? 'https://' + this.jiraSubdomain + '.atlassian.net/browse/'
+				: '';
+		},
+		jiraUrlPreview: function () {
+			const sub = this.jiraSubdomainDraft.trim();
+			return sub ? 'https://' + sub + '.atlassian.net/browse/' : '';
+		}
 	},
 	methods: {
 		addTask: function () {
@@ -122,10 +163,12 @@ var app = new Vue({
 			var runningForSeconds = Math.floor((Date.now() - this.startedAt) / 1000);
 			//console.log('task is running for ' + runningForSeconds + 's already -- STILL RUNNING');
 
-			this.timerReadable = this.formatSecondsAsReadable(runningForSeconds);
+			this.timerReadable = this.formatSecondsAsReadable(runningForSeconds, false);
 		},
 
-		formatSecondsAsReadable: function (secondsToFormat) {
+		formatSecondsAsReadable: function (secondsToFormat, includeSeconds) {
+            if (includeSeconds === undefined) includeSeconds = true;
+
             var hours = 0, minutes = 0, seconds = 0;
 
             if (secondsToFormat >= 3600) {
@@ -136,8 +179,36 @@ var app = new Vue({
             }
             seconds = secondsToFormat - (hours * 3600) - (minutes * 60);
 
-            return hours + 'h ' + minutes + 'm ' + seconds + 's';
+            return includeSeconds
+                ? hours + 'h ' + minutes + 'm ' + seconds + 's'
+                : hours + 'h ' + minutes + 'm';
 		},
+
+        formatAsJiraLink: function (title) {
+            if (!this.jiraBaseUrl) {
+                return title;
+            }
+            const pattern = /^([A-Z]{2,}-\d+)/;
+            if (pattern.test(title)) {
+                return title.replace(pattern, '<a href="'+this.jiraBaseUrl+'$1" target="_blank">$1</a>');
+            }
+            return title;
+        },
+
+        openSettings: function () {
+            this.jiraSubdomainDraft = this.jiraSubdomain;
+            this.settingsOpen = true;
+        },
+
+        saveSettings: function () {
+            this.jiraSubdomain = this.jiraSubdomainDraft.trim();
+            localStorage.setItem('simpletimer.jiraSubdomain', this.jiraSubdomain);
+            this.settingsOpen = false;
+        },
+
+        closeSettings: function () {
+            this.settingsOpen = false;
+        },
 
 		stopTimer: function () {
 			if (null != this.timedTask) {
@@ -189,3 +260,9 @@ var app = new Vue({
 
 // mount
 app.$mount('.timerapp')
+
+/* for dev only:
+app.newTask = 'ABC-123 lorem ipsum';
+app.addTask();
+app.startTimer(app.tasks[0]);
+// */

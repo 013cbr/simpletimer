@@ -1,140 +1,159 @@
 <!doctype html>
-<html>
+<html lang="en">
 <head>
-	<!--Import Google Icon Font-->
-	<link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
-	<!-- Materialize: Compiled and minified CSS -->
-	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/0.100.1/css/materialize.min.css">
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<title>simple timer</title>
 
-	<!--Import jQuery before materialize.js-->
-	<script type="text/javascript" src="https://code.jquery.com/jquery-3.2.1.min.js"></script>
-	<!-- Materialize: Compiled and minified JavaScript -->
-	<script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/0.100.1/js/materialize.min.js"></script>
-		     
-	<!-- VUE resource: -->
+	<link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
 	<script src="https://unpkg.com/vue@2.4.2/dist/vue.js"></script>
 
-	<link href="print.css" rel="stylesheet">
-
-	<style>
-		/*[v-cloak] { display: none; }*/
-		.nowrap {
-			white-space: nowrap;
-		}
-
-		i.icon-button,
-		tr.task td i.material-icons {
-			cursor: pointer;
-		}
-
-		.todays-date {
-			display: block;
-			position: absolute;
-			font-size: 1em;
-			right: 10px;
-			top: 10px;
-		}
-
-		.print-button {
-			display: block;
-			position: absolute;
-			font-size: 1em;
-			right: 90px;
-			top: 10px;
-			cursor: pointer;
-			text-decoration: underline;
-		}
-	</style>
+	<link href="restyle.css" rel="stylesheet" media="screen">
+	<link href="print.css" rel="stylesheet" media="print">
 </head>
 <body>
-	<div class="">
+	<main class="timerapp">
 
-		<section class="timerapp">
-			<div class="card-panel light-green lighten-2 no-print" v-if="timedTask">
-				<div class="row">
-					<div class="col s12 center-align white-text">
-						<h1>{{ timedTask.title }}</h1>
-						<h2>{{ timerReadable }}</h2>
+		<header class="app-header">
+			<span class="date">{{ todaysDate }} <span class="week">· wk {{ todaysWeek }}</span></span>
+			<div class="header-actions no-print">
+				<div class="settings-wrap">
+					<button class="icon-btn" @click="openSettings()" aria-label="settings">
+						<i class="material-icons" aria-hidden="true">settings</i>
+					</button>
+					<div class="settings-backdrop" v-if="settingsOpen" @click="closeSettings()"></div>
+					<div class="settings-popover" v-if="settingsOpen" @click.stop>
+						<label class="settings-label" for="jira-subdomain-input">Atlassian subdomain</label>
+						<input id="jira-subdomain-input" type="text" class="settings-input"
+						       v-model="jiraSubdomainDraft"
+						       v-todo-focus="settingsOpen"
+						       placeholder="mycompany"
+						       autocapitalize="off"
+						       autocorrect="off"
+						       spellcheck="false"
+						       @keyup.enter="saveSettings()"
+						       @keyup.esc="closeSettings()">
+						<div class="settings-preview" v-if="jiraUrlPreview">{{ jiraUrlPreview }}</div>
+						<div class="settings-preview settings-preview--empty" v-else>Tickets will not be linked</div>
+						<div class="settings-actions">
+							<button class="btn-ghost" @click="closeSettings()">cancel</button>
+							<button class="btn-primary" @click="saveSettings()">save</button>
+						</div>
 					</div>
 				</div>
-				<div class="row">
-					<div class="col s12 center-align white-text">
-						<i @click="stopTimer()" class="icon-button large material-icons">pause_circle_outline</i>
-					</div>
-				</div>
+				<button class="save-btn" v-if="tasks.length" @click="print()" aria-label="save (print)">
+					<i class="material-icons" aria-hidden="true">save_alt</i>
+					<span class="save-label">save</span>
+				</button>
 			</div>
+		</header>
 
-			<div class="row">
-				<div class="col s12 green lighten-5">
-					<span class="print-button" v-if="tasks.length" @click="print()">save</span>
-					<span class="todays-date">{{ todaysDate }}</span>
-					<h2>tasks</h2>
-					<input class="new-task no-print"
-						autofocus autocomplete="off"
-						placeholder="Specify a task"
-						v-model="newTask"
-						@keyup.enter="addTask">
-				</div>
+		<section class="running-card no-print" v-if="timedTask">
+			<div class="ring-wrap">
+				<svg class="ring" viewBox="0 0 120 120" aria-hidden="true">
+					<defs>
+						<linearGradient id="ring-grad" x1="0" y1="0" x2="1" y2="1">
+							<stop class="ring-grad-stop-0" offset="0%"   stop-color="#38BDF8"/>
+							<stop class="ring-grad-stop-1" offset="100%" stop-color="#0EA5E9"/>
+						</linearGradient>
+					</defs>
+					<circle class="ring-track"          cx="60" cy="60" r="52"></circle>
+					<circle class="ring-progress"       cx="60" cy="60" r="52"></circle>
+					<circle class="ring-track-inner"    cx="60" cy="60" r="46"></circle>
+					<circle class="ring-progress-inner" cx="60" cy="60" r="46"></circle>
+				</svg>
+				<div class="ring-readout">{{ timerReadable }}</div>
 			</div>
-
-			<section class="tasks" v-show="tasks.length" v-cloak>
-				<table class="bordered highlight">
-					<thead>
-						<tr>
-							<th>name</th>
-							<th></th>
-							<th class="right-align">total</th>
-							<th></th>
-						</tr>
-					</thead>
-					<tbody>
-						<tr v-for="task in tasks"
-							class="task"
-							:key="task.id"
-							:class="">
-								<td>
-									<span v-show="task != editedTask" @dblclick="editTask(task)" style="font-weight: 700;">{{ task.title }}</span>
-									<input class="edit" type="text"
-										v-show="task == editedTask" 
-										v-model="task.title"
-										v-todo-focus="task == editedTask"
-										@blur="doneEditing(task)"
-										@keyup.enter="doneEditing(task)"
-										@keyup.esc="cancelEditing(task)">
-								</td>
-								<td>
-									<i @click="startTimer(task)" class="material-icons no-print">play_circle_outline</i>
-									<i @click="addHour(task)" title="add 1h" class="material-icons no-print">add_circle_outline</i>
-									<i @click="removeHour(task)" title="remove 1h" class="material-icons no-print">remove_circle_outline</i>
-									<i @click="addQuarter(task)" title="add 15m" class="material-icons no-print">zoom_in</i>
-									<i @click="removeQuarter(task)" title="remove 15m" class="material-icons no-print">zoom_out</i>
-								</td>
-								<td class="right-align">{{ task.timeSpentReadable }}</td>
-								<td class="right-align" style="padding-right: 20px;"><i @click="removeTask(task)" class="material-icons no-print">cancel</i></td>
-						</tr>
-					</tbody>
-					<tfoot>
-						<tr>
-							<td colspan="2" class="right-align"><strong>cumulative</strong></td>
-							<td class="right-align">{{ totalReadable }}</td>
-						</tr>
-					</tfoot>
-				</table>
-			</section>
+			<div class="running-info">
+				<div class="running-title">{{ timedTask.title }}</div>
+				<button class="pause-btn" @click="stopTimer()" aria-label="pause timer">
+					<i class="material-icons" aria-hidden="true">pause</i>
+				</button>
+			</div>
 		</section>
 
-	</div><!-- /.container -->
+		<section class="tasks" v-show="tasks.length" v-cloak>
+			<table>
+				<thead>
+					<tr>
+						<th class="col-play"></th>
+						<th class="col-title">name</th>
+						<th class="col-total">total</th>
+						<th class="col-pill"></th>
+						<th class="col-remove"></th>
+					</tr>
+				</thead>
+				<tbody>
+					<tr v-for="task in tasks"
+					    class="task"
+					    :key="task.id"
+					    :class="{ 'task--running': task == timedTask }">
+						<td class="col-play no-print">
+							<button class="play-btn" @click="startTimer(task)" aria-label="start timer">
+								<i class="material-icons" aria-hidden="true">play_arrow</i>
+							</button>
+						</td>
+						<td class="col-title">
+							<span v-show="task != editedTask"
+							      class="task-title"
+							      @dblclick="editTask(task)"
+							      v-html="formatAsJiraLink(task.title)"></span>
+							<input class="edit" type="text"
+							       v-show="task == editedTask"
+							       v-model="task.title"
+							       v-todo-focus="task == editedTask"
+							       @blur="doneEditing(task)"
+							       @keyup.enter="doneEditing(task)"
+							       @keyup.esc="cancelEditing(task)">
+						</td>
+						<td class="col-total">{{ task.timeSpentReadable }}</td>
+						<td class="col-pill no-print">
+							<div class="pill" role="group" aria-label="adjust time">
+								<button @click="addHour(task)"      title="add 1h"      aria-label="add 1 hour">+1h</button>
+								<button @click="removeHour(task)"   title="remove 1h"   aria-label="remove 1 hour">−1h</button>
+								<span class="pill-divider" aria-hidden="true"></span>
+								<button @click="addQuarter(task)"   title="add 15m"     aria-label="add 15 minutes">+15</button>
+								<button @click="removeQuarter(task)" title="remove 15m" aria-label="remove 15 minutes">−15</button>
+							</div>
+						</td>
+						<td class="col-remove no-print">
+							<button class="remove-btn" @click="removeTask(task)" aria-label="remove task">
+								<i class="material-icons" aria-hidden="true">close</i>
+							</button>
+						</td>
+					</tr>
+				</tbody>
+				<tfoot>
+					<tr>
+						<td class="col-play"></td>
+						<td class="col-title"><span class="total-label">cumulative</span></td>
+						<td class="col-total">{{ totalReadable }}</td>
+						<td class="col-pill"></td>
+						<td class="col-remove"></td>
+					</tr>
+				</tfoot>
+			</table>
+		</section>
+
+		<div class="new-task-wrap no-print">
+			<input class="new-task"
+			       autofocus autocomplete="off"
+			       placeholder="Specify a new task"
+			       v-model="newTask"
+			       @keyup.enter="addTask">
+		</div>
+
+	</main>
 
 	<script src="timer.js"></script>
 	<script>
-		/* require user to confirm before closing the app
+		// require user to confirm before closing the app
 		window.addEventListener('beforeunload', function (e) {
 			const result = confirm('Are you sure you want to leave?');
 			if (result === false) {
 				e.preventDefault();
 			}
 		});
-		// */
 	</script>
 </body>
 </html>

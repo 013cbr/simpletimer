@@ -4,10 +4,37 @@
 	}
 
 	table, figure {
-		  page-break-inside: avoid;
+		page-break-inside: avoid;
 	}
 
 	.no-print {
 		display: none !important;
 	}
+
+	/* restore classic table rendering for print — the screen layout uses
+	   display: grid on rows, which leaves empty tracks when action cells
+	   are hidden by .no-print. */
+	body {
+		background: none;
+	}
+	.timerapp {
+		max-width: none;
+		padding: 0;
+		gap: 0;
+		min-height: 0;
+	}
+	.tasks {
+		box-shadow: none;
+		background: none;
+		padding: 0;
+	}
+	table       { display: table; width: 100%; border-collapse: collapse; }
+	thead       { display: table-header-group; }
+	tbody       { display: table-row-group; }
+	tfoot       { display: table-footer-group; }
+	tr          { display: table-row; padding: 0; gap: 0; border: 0; }
+	th, td      { display: table-cell; padding: 6px 10px; border-bottom: 1px solid #ccc; }
+	thead th    { text-align: left; }
+	.col-total  { text-align: right; }
+	tfoot td    { border-top: 2px solid #333; border-bottom: 0; font-weight: 700; }
 }
