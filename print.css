@@ -37,4 +37,8 @@
 	thead th    { text-align: left; }
 	.col-total  { text-align: right; }
 	tfoot td    { border-top: 2px solid #333; border-bottom: 0; font-weight: 700; }
+
+	/* action columns have no purpose in print; hiding them in every row
+	   (thead/tbody/tfoot) keeps the remaining name/total columns aligned. */
+	.col-play, .col-pill, .col-remove { display: none; }
 }
