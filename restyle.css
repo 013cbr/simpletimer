@@ -30,10 +30,7 @@
     --s5: 24px;
     --s6: 40px;
 
-    --font: "Poppins", -apple-system, BlinkMacSystemFont, "SF Pro Text",
-            "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-    --font-display: "Poppins", -apple-system, BlinkMacSystemFont, "SF Pro Display",
-                    "Helvetica Neue", Arial, sans-serif;
+    --font: "Barlow Condensed", "Oswald", "Helvetica Neue", Arial, sans-serif;
 }
 
 *, *::before, *::after { box-sizing: border-box; }
@@ -196,7 +193,7 @@ a:hover { text-decoration: underline; }
     font-size: 0.84rem;
     color: var(--ink);
     line-height: 1.4;
-    font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+    font-family: var(--font);
     word-break: break-all;
     padding: 8px 10px;
     background: var(--surface-2);
@@ -204,7 +201,6 @@ a:hover { text-decoration: underline; }
 }
 .settings-preview--empty {
     color: var(--ink-3);
-    font-family: inherit;
     font-style: italic;
 }
 
@@ -310,7 +306,7 @@ a:hover { text-decoration: underline; }
 }
 
 .focus-title {
-    font-family: var(--font-display);
+    font-family: var(--font);
     font-size: 1.6rem;
     font-weight: 400;
     letter-spacing: -0.02em;
@@ -393,10 +389,10 @@ a:hover { text-decoration: underline; }
     padding: 0 12px;
 }
 .ring-readout .readout-time {
-    font-family: var(--font-display);
-    font-weight: 400;
+    font-family: var(--font);
+    font-weight: 200;
     font-variant-numeric: tabular-nums;
-    letter-spacing: -0.01em;
+    letter-spacing: 0;
     color: var(--ink);
     line-height: 1;
 }
@@ -614,7 +610,7 @@ tfoot tr {
     font-weight: 500;
 }
 tfoot .col-total {
-    font-family: var(--font-display);
+    font-family: var(--font);
     font-size: 1.5rem;
     font-weight: 600;
     letter-spacing: -0.02em;
