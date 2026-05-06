@@ -72,9 +72,9 @@ var app = new Vue({
 			var fraction = (this.elapsedSeconds % 3600) / 3600;
 			return c * (1 - fraction);
 		},
-		// stroke-dashoffset for hours ring (r=70, full cycle = 12h)
+		// stroke-dashoffset for hours ring (r=78, full cycle = 12h)
 		hoursOffset: function () {
-			var c = 2 * Math.PI * 70;
+			var c = 2 * Math.PI * 78;
 			var fraction = (this.elapsedSeconds % 43200) / 43200;
 			return c * (1 - fraction);
 		},

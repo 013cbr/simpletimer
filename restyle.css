@@ -312,7 +312,7 @@ a:hover { text-decoration: underline; }
 .focus-title {
     font-family: var(--font-display);
     font-size: 1.6rem;
-    font-weight: 600;
+    font-weight: 400;
     letter-spacing: -0.02em;
     color: var(--ink);
     margin: 0;
@@ -346,9 +346,9 @@ a:hover { text-decoration: underline; }
 .ring-hours-track,
 .ring-hours-progress {
     fill: none;
-    stroke-width: 10;
+    stroke-width: 7;
     stroke-linecap: round;
-    stroke-dasharray: 439.823;     /* 2π × 70 */
+    stroke-dasharray: 490.088;     /* 2π × 78 */
 }
 .ring-hours-track    { stroke: rgba(0, 0, 0, 0.05); }
 .ring-hours-progress {
@@ -360,7 +360,7 @@ a:hover { text-decoration: underline; }
 .ring-minutes-track,
 .ring-minutes-progress {
     fill: none;
-    stroke-width: 4;
+    stroke-width: 7;
     stroke-linecap: round;
     stroke-dasharray: 552.920;     /* 2π × 88 */
 }
