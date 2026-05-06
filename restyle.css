@@ -238,17 +238,84 @@ a:hover { text-decoration: underline; }
 .btn-primary:hover  { background: var(--accent-hover); }
 .btn-primary:active { background: var(--accent-press); }
 
-/* ---------- running-timer hero ---------- */
+/* ---------- view switcher ---------- */
 
-.running-card {
+.viewport {
     position: relative;
-    display: grid;
-    grid-template-columns: auto 1fr;
+    /* clip (not hidden) so the body stays the scroll container —
+       keeps .new-task-wrap's position: sticky working */
+    overflow: clip;
+    flex: 1 1 auto;
+    /* flex container so the track stretches to full height,
+       letting .tasks-view push .new-task-wrap to the bottom */
+    display: flex;
+}
+
+.track {
+    display: flex;
+    width: 200%;
+    flex-shrink: 0;
+    transition: transform 320ms cubic-bezier(0.32, 0.72, 0, 1);
+    will-change: transform;
+}
+
+.view {
+    flex: 0 0 50%;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
     gap: var(--s5);
+}
+
+.viewport--tasks .track { transform: translateX(0); }
+.viewport--focus .track { transform: translateX(-50%); }
+
+/* hide the app header in focus mode for a pure timer-only screen */
+.app-header {
+    transition: opacity 200ms ease, visibility 0s linear 0ms;
+}
+.timerapp--focus .app-header {
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+    transition: opacity 200ms ease, visibility 0s linear 200ms;
+}
+
+/* ---------- focus view ---------- */
+
+.focus-view {
     align-items: center;
-    padding: var(--s6) var(--s5);
-    background: var(--surface-2);
-    border-radius: var(--r-lg);
+    justify-content: center;
+    min-height: calc(100vh - 140px);
+    padding: var(--s5) var(--s4);
+}
+
+.focus-stage {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--s5);
+    text-align: center;
+    /* nudge upward — the header is hidden but still occupies its space,
+       so geometric centering of focus-view falls below the window's center */
+    transform: translateY(-9vh);
+}
+
+.focus-total {
+    color: var(--ink-3);
+    font-size: 0.94rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+}
+
+.focus-title {
+    font-family: var(--font-display);
+    font-size: 1.6rem;
+    font-weight: 600;
+    letter-spacing: -0.02em;
+    color: var(--ink);
+    margin: 0;
+    word-break: break-word;
 }
 
 .ring-wrap {
@@ -256,6 +323,11 @@ a:hover { text-decoration: underline; }
     width: 132px;
     height: 132px;
     flex: none;
+}
+
+.ring-wrap--lg {
+    width: clamp(220px, 38vmin, 360px);
+    height: clamp(220px, 38vmin, 360px);
 }
 
 .ring {
@@ -324,23 +396,8 @@ a:hover { text-decoration: underline; }
     padding: 0 8px;
 }
 
-.running-info {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: var(--s4);
-    min-width: 0;
-}
-
-.running-title {
-    font-family: var(--font-display);
-    font-size: 1.6rem;
-    font-weight: 600;
-    letter-spacing: -0.02em;
-    color: var(--ink);
-    line-height: 1.15;
-    word-break: break-word;
-    min-width: 0;
+.ring-readout--lg {
+    font-size: clamp(2rem, 6vmin, 3.4rem);
 }
 
 .pause-btn {
@@ -358,6 +415,9 @@ a:hover { text-decoration: underline; }
 .pause-btn:hover  { background: #2C2C2E; }
 .pause-btn:active { transform: scale(0.96); }
 .pause-btn .material-icons { font-size: 26px; }
+
+.pause-btn--lg { width: 96px; height: 96px; }
+.pause-btn--lg .material-icons { font-size: 44px; }
 
 /* ---------- task list ---------- */
 
@@ -574,15 +634,11 @@ tfoot .col-total {
         gap: var(--s4);
     }
 
-    .running-card {
-        gap: var(--s4);
-        padding: var(--s5) var(--s4);
-    }
-    .ring-wrap    { width: 96px; height: 96px; }
-    .ring-readout { font-size: 1.05rem; }
-    .running-title { font-size: 1.3rem; }
-    .pause-btn    { width: 44px; height: 44px; }
-    .pause-btn .material-icons { font-size: 22px; }
+    .focus-view  { padding: var(--s4); min-height: calc(100vh - 100px); }
+    .focus-stage { gap: var(--s4); }
+    .focus-title { font-size: 1.3rem; }
+    .pause-btn--lg { width: 76px; height: 76px; }
+    .pause-btn--lg .material-icons { font-size: 36px; }
 
     thead { display: none; }
 
@@ -629,4 +685,6 @@ tfoot .col-total {
     .ring-progress-inner { animation: none; stroke-dashoffset: 87; }
     .play-btn:active,
     .pause-btn:active    { transform: none; }
+    .track,
+    .app-header          { transition: none; }
 }

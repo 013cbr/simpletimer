@@ -33,6 +33,7 @@ var app = new Vue({
 		beforeEditCache: null,
 		editedTask: null,
 		timedTask: null,
+		viewMode: 'tasks',
 		timerReadable: '',
 		timerInterval: null,
 		totalReadable: '',
@@ -150,6 +151,7 @@ var app = new Vue({
 		startTimer: function (task) {
 			if (null == this.timedTask) {
 				this.timedTask = task;
+				this.viewMode = 'focus';
 				this.startedAt = Date.now();
 				this.timerReadable = 'starting..';
 
@@ -212,19 +214,24 @@ var app = new Vue({
 
 		stopTimer: function () {
 			if (null != this.timedTask) {
-				this.timerReadable = 'stopping..';
-
 				var ranForSeconds = Math.floor((Date.now() - this.startedAt) / 1000);
 				//console.log('task ran for ' + ranForSeconds + 's -- STOPPED');
 
 				this.timedTask.secondsSpent += ranForSeconds;
 				this.timedTask.timeSpentReadable = this.formatSecondsAsReadable(this.timedTask.secondsSpent);
 
-				// clear all vars related to the timer
-				clearTimeout(this.timerInterval);
-				this.timedTask = null;
-                this.startedAt = 0;
-				this.timerReadable = '';
+				// clear the ticking interval and trigger the slide back
+				clearInterval(this.timerInterval);
+				this.viewMode = 'tasks';
+
+				// keep the focus view rendered until the slide finishes,
+				// so it slides out instead of vanishing
+				var self = this;
+				setTimeout(function () {
+					self.timedTask = null;
+					self.startedAt = 0;
+					self.timerReadable = '';
+				}, 320);
 			}
 
 			this.updateTotal();

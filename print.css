@@ -23,6 +23,13 @@
 		gap: 0;
 		min-height: 0;
 	}
+	/* neutralize the sliding viewport so the task list renders normally */
+	.viewport, .track, .view {
+		display: block;
+		width: auto;
+		transform: none !important;
+		overflow: visible;
+	}
 	.tasks {
 		box-shadow: none;
 		background: none;
