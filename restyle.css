@@ -287,7 +287,7 @@ a:hover { text-decoration: underline; }
     align-items: center;
     justify-content: center;
     min-height: calc(100vh - 140px);
-    padding: var(--s5) var(--s4);
+    padding: var(--s5) 0;
 }
 
 .focus-stage {
@@ -327,8 +327,8 @@ a:hover { text-decoration: underline; }
 }
 
 .ring-wrap--lg {
-    width: clamp(260px, 42vmin, 400px);
-    height: clamp(260px, 42vmin, 400px);
+    width: clamp(220px, min(85vw, 70vmin), 400px);
+    height: clamp(220px, min(85vw, 70vmin), 400px);
 }
 
 .ring {
@@ -656,7 +656,7 @@ tfoot .col-total {
         gap: var(--s4);
     }
 
-    .focus-view  { padding: var(--s4); min-height: calc(100vh - 100px); }
+    .focus-view  { padding: var(--s4) 0; min-height: calc(100vh - 100px); }
     .focus-stage { gap: var(--s4); }
     .focus-title { font-size: 1.3rem; }
     .pause-btn--lg { height: 50px; padding: 0 48px; }
