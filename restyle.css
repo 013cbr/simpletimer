@@ -3,18 +3,18 @@
    ============================================================ */
 
 :root {
-    --bg:           #FBFBFD;
+    --bg:           #FFFFFF;
     --surface:      #FFFFFF;
-    --surface-2:    #F5F5F7;
+    --surface-2:    #F4F4F6;
     --ink:          #1D1D1F;
     --ink-2:        #6E6E73;
     --ink-3:        #86868B;
     --separator:    #D2D2D7;
     --separator-2: #E8E8ED;
-    --accent:       #0071E3;
-    --accent-hover: #0077ED;
-    --accent-press: #0066CC;
-    --accent-soft:  rgba(0, 113, 227, 0.08);
+    --accent:       #F26C44;
+    --accent-hover: #F47D5C;
+    --accent-press: #DC5934;
+    --accent-soft:  rgba(242, 108, 68, 0.10);
     --accent-ink:   #FFFFFF;
     --danger:       #FF3B30;
 
@@ -30,9 +30,9 @@
     --s5: 24px;
     --s6: 40px;
 
-    --font: -apple-system, BlinkMacSystemFont, "SF Pro Text",
+    --font: "Poppins", -apple-system, BlinkMacSystemFont, "SF Pro Text",
             "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-    --font-display: -apple-system, BlinkMacSystemFont, "SF Pro Display",
+    --font-display: "Poppins", -apple-system, BlinkMacSystemFont, "SF Pro Display",
                     "Helvetica Neue", Arial, sans-serif;
 }
 
@@ -114,15 +114,15 @@ a:hover { text-decoration: underline; }
     gap: 6px;
     padding: 8px 18px;
     border-radius: var(--r-pill);
-    background: var(--accent);
-    color: var(--accent-ink);
+    background: var(--surface-2);
+    color: var(--ink);
     font-size: 0.88rem;
     font-weight: 500;
     transition: background 200ms ease;
 }
-.save-btn:hover  { background: var(--accent-hover); }
-.save-btn:active { background: var(--accent-press); }
-.save-btn .material-icons { font-size: 16px; }
+.save-btn:hover  { background: var(--separator-2); }
+.save-btn:active { background: var(--separator); }
+.save-btn .material-icons { font-size: 16px; color: var(--ink-2); }
 
 .header-actions {
     display: flex;
@@ -189,7 +189,7 @@ a:hover { text-decoration: underline; }
 }
 .settings-input:focus {
     border-color: var(--accent);
-    box-shadow: 0 0 0 3px rgba(0, 113, 227, 0.18);
+    box-shadow: 0 0 0 3px rgba(242, 108, 68, 0.22);
 }
 
 .settings-preview {
@@ -231,12 +231,12 @@ a:hover { text-decoration: underline; }
     border-radius: var(--r-pill);
     font-size: 0.86rem;
     font-weight: 500;
-    color: var(--accent-ink);
-    background: var(--accent);
+    color: var(--surface);
+    background: var(--ink);
     transition: background 200ms ease;
 }
-.btn-primary:hover  { background: var(--accent-hover); }
-.btn-primary:active { background: var(--accent-press); }
+.btn-primary:hover  { background: #2C2C2E; }
+.btn-primary:active { background: #1A1A1C; }
 
 /* ---------- view switcher ---------- */
 
@@ -303,9 +303,10 @@ a:hover { text-decoration: underline; }
 
 .focus-total {
     color: var(--ink-3);
-    font-size: 0.94rem;
+    font-size: 0.78rem;
+    font-weight: 500;
     text-transform: uppercase;
-    letter-spacing: 0.08em;
+    letter-spacing: 0.14em;
 }
 
 .focus-title {
@@ -326,78 +327,90 @@ a:hover { text-decoration: underline; }
 }
 
 .ring-wrap--lg {
-    width: clamp(220px, 38vmin, 360px);
-    height: clamp(220px, 38vmin, 360px);
+    width: clamp(260px, 42vmin, 400px);
+    height: clamp(260px, 42vmin, 400px);
 }
 
 .ring {
     width: 100%;
     height: 100%;
+    /* rotate so circles' default 3 o'clock start becomes 12 o'clock;
+       tick coords (in JS) are computed without this offset so the
+       rotation aligns them automatically */
     transform: rotate(-90deg);
     display: block;
+    overflow: visible;
 }
 
-.ring-track {
+/* hours (innermost, thick orange arc — like the orange progress in inspiration) */
+.ring-hours-track,
+.ring-hours-progress {
     fill: none;
-    stroke: rgba(0, 0, 0, 0.06);
-    stroke-width: 10;
-}
-
-.ring-progress {
-    fill: none;
-    stroke: var(--accent);
     stroke-width: 10;
     stroke-linecap: round;
-    stroke-dasharray: 326.73;       /* 2π × 52 */
-    stroke-dashoffset: 326.73;
-    animation: ring-fill 3600s linear infinite;
+    stroke-dasharray: 439.823;     /* 2π × 70 */
 }
-
-@keyframes ring-fill {
-    from { stroke-dashoffset: 326.73; }
-    to   { stroke-dashoffset: 0; }
-}
-
-.ring-grad-stop-0 { stop-color: #0071E3; }   /* apple blue */
-.ring-grad-stop-1 { stop-color: #5AC8FA; }   /* apple cyan */
-
-.ring-track-inner {
-    fill: none;
-    stroke: rgba(0, 0, 0, 0.04);
-    stroke-width: 4;
-}
-.ring-progress-inner {
-    fill: none;
+.ring-hours-track    { stroke: rgba(0, 0, 0, 0.05); }
+.ring-hours-progress {
     stroke: url(#ring-grad);
+    transition: stroke-dashoffset 480ms ease-out;
+}
+
+/* minutes (middle, slim arc) */
+.ring-minutes-track,
+.ring-minutes-progress {
+    fill: none;
     stroke-width: 4;
     stroke-linecap: round;
-    stroke-dasharray: 289.03;       /* 2π × 46 */
-    stroke-dashoffset: 289.03;
-    animation: ring-fill-inner 60s linear infinite;
+    stroke-dasharray: 552.920;     /* 2π × 88 */
 }
-@keyframes ring-fill-inner {
-    from { stroke-dashoffset: 289.03; }
-    to   { stroke-dashoffset: 0; }
+.ring-minutes-track    { stroke: rgba(0, 0, 0, 0.05); }
+.ring-minutes-progress {
+    stroke: url(#ring-grad);
+    transition: stroke-dashoffset 320ms ease-out;
+}
+
+/* seconds (60 outer tick marks — like the dial in the inspiration) */
+.ring-tick {
+    stroke: rgba(0, 0, 0, 0.10);
+    stroke-width: 1.6;
+    stroke-linecap: round;
+    transition: stroke 240ms ease;
+}
+.ring-tick--on {
+    stroke: var(--accent);
 }
 
 .ring-readout {
     position: absolute;
     inset: 0;
     display: flex;
+    flex-direction: column;
     align-items: center;
     justify-content: center;
-    font-family: var(--font-display);
-    font-size: 1.4rem;
-    font-weight: 600;
-    font-variant-numeric: tabular-nums;
-    letter-spacing: -0.02em;
-    color: var(--ink);
+    gap: 6px;
     text-align: center;
-    padding: 0 8px;
+    padding: 0 12px;
+}
+.ring-readout .readout-time {
+    font-family: var(--font-display);
+    font-weight: 400;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: -0.01em;
+    color: var(--ink);
+    line-height: 1;
+}
+.ring-readout .readout-label {
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    letter-spacing: 0.16em;
+    color: var(--ink-3);
+    font-weight: 500;
+    line-height: 1;
 }
 
-.ring-readout--lg {
-    font-size: clamp(2rem, 6vmin, 3.4rem);
+.ring-readout--lg .readout-time {
+    font-size: clamp(2.2rem, 7vmin, 3.6rem);
 }
 
 .pause-btn {
@@ -408,16 +421,26 @@ a:hover { text-decoration: underline; }
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    background: var(--ink);
-    color: var(--surface);
+    background: var(--surface-2);
+    color: var(--ink);
     transition: background 200ms ease, transform 100ms ease;
 }
-.pause-btn:hover  { background: #2C2C2E; }
+.pause-btn:hover  { background: var(--separator-2); }
 .pause-btn:active { transform: scale(0.96); }
-.pause-btn .material-icons { font-size: 26px; }
+.pause-btn .material-icons { font-size: 26px; color: var(--ink-2); }
 
-.pause-btn--lg { width: 96px; height: 96px; }
-.pause-btn--lg .material-icons { font-size: 44px; }
+/* the focus-screen stop button is a wide pill with text (matches inspiration's start pill) */
+.pause-btn--lg {
+    width: auto;
+    height: 56px;
+    padding: 0 64px;
+    border-radius: var(--r-pill);
+    font-size: 0.82rem;
+    font-weight: 500;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--ink);
+}
 
 /* ---------- task list ---------- */
 
@@ -498,7 +521,7 @@ tbody tr.task.task--running { background: var(--accent-soft); }
 }
 .edit:focus {
     border-color: var(--accent);
-    box-shadow: 0 0 0 3px rgba(0, 113, 227, 0.18);
+    box-shadow: 0 0 0 3px rgba(242, 108, 68, 0.22);
 }
 
 /* play button — apple secondary style */
@@ -511,13 +534,13 @@ tbody tr.task.task--running { background: var(--accent-soft); }
     justify-content: center;
     background: var(--surface);
     border: 1px solid var(--separator);
-    color: var(--ink);
+    color: var(--ink-2);
     transition: background 200ms ease, border-color 200ms ease, color 200ms ease, transform 100ms ease;
 }
 .play-btn:hover  {
-    background: var(--ink);
-    color: var(--surface);
-    border-color: var(--ink);
+    background: var(--accent);
+    color: var(--accent-ink);
+    border-color: var(--accent);
 }
 .play-btn:active { transform: scale(0.96); }
 .play-btn .material-icons { font-size: 20px; margin-left: 1px; }
@@ -623,7 +646,6 @@ tfoot .col-total {
 .new-task::placeholder { color: var(--ink-3); }
 .new-task:focus {
     border-color: var(--accent);
-    box-shadow: 0 0 0 3px rgba(0, 113, 227, 0.18);
 }
 
 /* ---------- responsive ---------- */
@@ -637,8 +659,7 @@ tfoot .col-total {
     .focus-view  { padding: var(--s4); min-height: calc(100vh - 100px); }
     .focus-stage { gap: var(--s4); }
     .focus-title { font-size: 1.3rem; }
-    .pause-btn--lg { width: 76px; height: 76px; }
-    .pause-btn--lg .material-icons { font-size: 36px; }
+    .pause-btn--lg { height: 50px; padding: 0 48px; }
 
     thead { display: none; }
 

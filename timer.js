@@ -35,6 +35,7 @@ var app = new Vue({
 		timedTask: null,
 		viewMode: 'tasks',
 		timerReadable: '',
+		elapsedSeconds: 0,
 		timerInterval: null,
 		totalReadable: '',
 		todaysDate: new Date().toLocaleDateString(),
@@ -53,6 +54,46 @@ var app = new Vue({
 		jiraUrlPreview: function () {
 			const sub = this.jiraSubdomainDraft.trim();
 			return sub ? 'https://' + sub + '.atlassian.net/browse/' : '';
+		},
+		// HH:MM (zero-padded) for the focus-screen readout
+		focusReadable: function () {
+			var h = Math.floor(this.elapsedSeconds / 3600);
+			var m = Math.floor((this.elapsedSeconds % 3600) / 60);
+			var pad = function (n) { return n < 10 ? '0' + n : '' + n; };
+			return pad(h) + ':' + pad(m);
+		},
+		// 0..60 — number of outer ticks lit, advances 1/sec, resets each minute
+		secondsTickCount: function () {
+			return this.elapsedSeconds % 60;
+		},
+		// stroke-dashoffset for minutes ring (r=88, full cycle = 1h)
+		minutesOffset: function () {
+			var c = 2 * Math.PI * 88;
+			var fraction = (this.elapsedSeconds % 3600) / 3600;
+			return c * (1 - fraction);
+		},
+		// stroke-dashoffset for hours ring (r=70, full cycle = 12h)
+		hoursOffset: function () {
+			var c = 2 * Math.PI * 70;
+			var fraction = (this.elapsedSeconds % 43200) / 43200;
+			return c * (1 - fraction);
+		},
+		// 60 evenly-spaced tick coordinates around the outer ring
+		// (svg has rotate(-90deg), so angle 0 = 12 o'clock after rotation)
+		tickPositions: function () {
+			var ticks = [];
+			var cx = 120, cy = 120, innerR = 104, outerR = 113;
+			for (var n = 1; n <= 60; n++) {
+				var rad = (n - 1) * 6 * Math.PI / 180;
+				ticks.push({
+					n: n,
+					x1: cx + Math.cos(rad) * innerR,
+					y1: cy + Math.sin(rad) * innerR,
+					x2: cx + Math.cos(rad) * outerR,
+					y2: cy + Math.sin(rad) * outerR
+				});
+			}
+			return ticks;
 		}
 	},
 	methods: {
@@ -153,7 +194,8 @@ var app = new Vue({
 				this.timedTask = task;
 				this.viewMode = 'focus';
 				this.startedAt = Date.now();
-				this.timerReadable = 'starting..';
+				this.elapsedSeconds = 0;
+				this.timerReadable = '0h 0m';
 
 				this.timerInterval = setInterval(this.updateTimer, 500);
 			} else {
@@ -162,10 +204,8 @@ var app = new Vue({
 		},
 
 		updateTimer: function () {
-			var runningForSeconds = Math.floor((Date.now() - this.startedAt) / 1000);
-			//console.log('task is running for ' + runningForSeconds + 's already -- STILL RUNNING');
-
-			this.timerReadable = this.formatSecondsAsReadable(runningForSeconds, false);
+			this.elapsedSeconds = Math.floor((Date.now() - this.startedAt) / 1000);
+			this.timerReadable = this.formatSecondsAsReadable(this.elapsedSeconds, false);
 		},
 
 		formatSecondsAsReadable: function (secondsToFormat, includeSeconds) {
@@ -230,6 +270,7 @@ var app = new Vue({
 				setTimeout(function () {
 					self.timedTask = null;
 					self.startedAt = 0;
+					self.elapsedSeconds = 0;
 					self.timerReadable = '';
 				}, 320);
 			}

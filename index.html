@@ -5,6 +5,9 @@
 	<meta name="viewport" content="width=device-width, initial-scale=1">
 	<title>simple timer</title>
 
+	<link rel="preconnect" href="https://fonts.googleapis.com">
+	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+	<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 	<link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
 	<script src="https://unpkg.com/vue@2.4.2/dist/vue.js"></script>
 
@@ -128,24 +131,38 @@
 					<div class="focus-stage">
 						<div class="focus-total">Total — {{ totalReadable }}</div>
 						<div class="ring-wrap ring-wrap--lg">
-							<svg class="ring" viewBox="0 0 120 120" aria-hidden="true">
+							<svg class="ring" viewBox="0 0 240 240" aria-hidden="true">
 								<defs>
 									<linearGradient id="ring-grad" x1="0" y1="0" x2="1" y2="1">
-										<stop class="ring-grad-stop-0" offset="0%"   stop-color="#38BDF8"/>
-										<stop class="ring-grad-stop-1" offset="100%" stop-color="#0EA5E9"/>
+										<stop offset="0%"   stop-color="#F58A66"/>
+										<stop offset="100%" stop-color="#DC5934"/>
 									</linearGradient>
 								</defs>
-								<circle class="ring-track"          cx="60" cy="60" r="52"></circle>
-								<circle class="ring-progress"       cx="60" cy="60" r="52"></circle>
-								<circle class="ring-track-inner"    cx="60" cy="60" r="46"></circle>
-								<circle class="ring-progress-inner" cx="60" cy="60" r="46"></circle>
+								<!-- hours (innermost, thick) -->
+								<circle class="ring-hours-track"    cx="120" cy="120" r="70"></circle>
+								<circle class="ring-hours-progress" cx="120" cy="120" r="70"
+								        :style="{ strokeDashoffset: hoursOffset }"></circle>
+
+								<!-- minutes (middle, slim) -->
+								<circle class="ring-minutes-track"    cx="120" cy="120" r="88"></circle>
+								<circle class="ring-minutes-progress" cx="120" cy="120" r="88"
+								        :style="{ strokeDashoffset: minutesOffset }"></circle>
+
+								<!-- seconds (outer tick marks) -->
+								<line v-for="tick in tickPositions"
+								      :key="tick.n"
+								      class="ring-tick"
+								      :class="{ 'ring-tick--on': tick.n <= secondsTickCount }"
+								      :x1="tick.x1" :y1="tick.y1"
+								      :x2="tick.x2" :y2="tick.y2"></line>
 							</svg>
-							<div class="ring-readout ring-readout--lg">{{ timerReadable }}</div>
+							<div class="ring-readout ring-readout--lg">
+								<div class="readout-time">{{ focusReadable }}</div>
+								<div class="readout-label">HOURS</div>
+							</div>
 						</div>
 						<h2 class="focus-title" v-html="formatAsJiraLink(timedTask.title)"></h2>
-						<button class="pause-btn pause-btn--lg" @click="stopTimer()" aria-label="stop timer">
-							<i class="material-icons" aria-hidden="true">stop</i>
-						</button>
+						<button class="pause-btn pause-btn--lg" @click="stopTimer()" aria-label="stop timer">stop</button>
 					</div>
 				</section>
 
