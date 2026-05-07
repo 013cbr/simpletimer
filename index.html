@@ -2,8 +2,17 @@
 <html lang="en">
 <head>
 	<meta charset="utf-8">
-	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 	<title>simple timer</title>
+
+	<link rel="manifest" href="manifest.webmanifest">
+	<meta name="theme-color" content="#DC5934">
+	<link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
+	<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+	<meta name="apple-mobile-web-app-capable" content="yes">
+	<meta name="mobile-web-app-capable" content="yes">
+	<meta name="apple-mobile-web-app-status-bar-style" content="default">
+	<meta name="apple-mobile-web-app-title" content="simple timer">
 
 	<link rel="preconnect" href="https://fonts.googleapis.com">
 	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -173,13 +182,22 @@
 
 	<script src="timer.js"></script>
 	<script>
-		// require user to confirm before closing the app
+		// require user to confirm before closing the app — but not when running as an installed PWA,
+		// where "closing" just means switching apps and the prompt is jarring
 		window.addEventListener('beforeunload', function (e) {
+			if (window.matchMedia('(display-mode: standalone)').matches) return;
+			if (window.navigator.standalone) return; // iOS Safari standalone
 			const result = confirm('Are you sure you want to leave?');
 			if (result === false) {
 				e.preventDefault();
 			}
 		});
+
+		if ('serviceWorker' in navigator) {
+			window.addEventListener('load', function () {
+				navigator.serviceWorker.register('sw.js').catch(function () {});
+			});
+		}
 	</script>
 </body>
 </html>

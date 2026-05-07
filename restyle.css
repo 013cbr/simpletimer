@@ -705,3 +705,14 @@ tfoot .col-total {
     .track,
     .app-header          { transition: none; }
 }
+
+/* ---------- safe-area insets (notch / home indicator on installed mobile PWAs) ---------- */
+
+@supports (padding: max(0px, env(safe-area-inset-top))) {
+    .timerapp {
+        padding-top:    max(var(--s5), env(safe-area-inset-top));
+        padding-left:   max(var(--s4), env(safe-area-inset-left));
+        padding-right:  max(var(--s4), env(safe-area-inset-right));
+        padding-bottom: env(safe-area-inset-bottom);
+    }
+}
