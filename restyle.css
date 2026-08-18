@@ -25,6 +25,19 @@
     --g1: #F58A66;
     --g2: #DC5934;
 
+    /* Eight task colours, handed out by list position (see taskColour in timer.js).
+       Values here are for a light ground; the dark themes override them.
+       Eight rather than more because the sequence wraps around anyway, and the
+       step of 3 is coprime with 8 so all eight are used before any repeats. */
+    --tc-1: #D8453A;   /* red */
+    --tc-2: #D9791F;   /* orange */
+    --tc-3: #7E9C24;   /* olive */
+    --tc-4: #2E9E63;   /* green */
+    --tc-5: #1F9B94;   /* teal */
+    --tc-6: #2183B8;   /* blue */
+    --tc-7: #8A4FC0;   /* violet */
+    --tc-8: #C2478E;   /* magenta */
+
     /* surfaces that are tinted rather than coloured — these have to flip
        from black-on-light to white-on-dark, so they cannot stay hard-coded */
     --track:      rgba(0, 0, 0, 0.05);   /* hour + minute ring tracks */
@@ -83,6 +96,16 @@
     /* btn-primary is ink-on-surface, so on dark it becomes a light button */
     --btn-primary-hover:  #E4E4E8;
     --btn-primary-active: #CFCFD4;
+
+    /* same hues, lifted so they read against the graphite ground */
+    --tc-1: #FF7A6B;
+    --tc-2: #FFA24D;
+    --tc-3: #B9D14A;
+    --tc-4: #58D98A;
+    --tc-5: #4FD3C4;
+    --tc-6: #5FBEEE;
+    --tc-7: #B98BEA;
+    --tc-8: #EE83C2;
 }
 
 /* Each theme is named after its gradient, so the accent is picked from
@@ -804,6 +827,87 @@ tfoot .col-total {
     font-size: 1.5rem;
     font-weight: 600;
     letter-spacing: -0.02em;
+}
+
+/* ---------- task colour dot + day bar ---------- */
+
+.task-dot {
+    display: inline-block;
+    width: 4px;
+    height: 15px;
+    border-radius: 2px;
+    margin-right: 9px;
+    vertical-align: -2px;
+    flex: none;
+}
+
+/* proportional make-up of the day. NOT a timeline — the app only knows how much
+   time went to each task, never when, so segments follow list order. */
+.day-bar-wrap { padding: 0 var(--s2); }
+
+.day-bar {
+    position: relative;
+    display: flex;
+    height: 11px;
+    border-radius: var(--r-pill);
+    overflow: hidden;
+    background: var(--track-2);
+}
+.day-bar > i {
+    display: block;
+    height: 100%;
+    transition: width 320ms ease-out;
+}
+
+/* only drawn once the total runs past the goal, to mark where the goal sat */
+.day-bar-goal {
+    position: absolute;
+    top: -3px;
+    bottom: -3px;
+    width: 2px;
+    background: var(--ink);
+    opacity: 0.55;
+}
+
+.day-bar-labels {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 7px;
+    font-size: 0.72rem;
+    color: var(--ink-3);
+    font-variant-numeric: tabular-nums;
+}
+
+/* the hovered segment's name, shown in place of the day total. min-height keeps
+   the row from shifting as the text swaps in and out. */
+.day-bar-labels { min-height: 1.05rem; }
+
+.day-bar-name {
+    display: flex;
+    align-items: center;
+    min-width: 0;
+    color: var(--ink);
+    font-weight: 500;
+}
+.day-bar-name > span:first-child { flex: none; }
+.day-bar-time {
+    margin-left: var(--s2);
+    color: var(--ink-3);
+    font-weight: 500;
+    flex: none;
+}
+
+.day-bar { cursor: default; }
+.day-bar > i { transition: width 320ms ease-out, filter 140ms ease; }
+/* lift the hovered segment so it is clear which one the name belongs to */
+.day-bar > i:hover { filter: brightness(1.15) saturate(1.1); }
+
+.day-bar-name .task-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 2px;
+    margin-right: 7px;
+    vertical-align: baseline;
 }
 
 /* ---------- sticky new-task input ---------- */

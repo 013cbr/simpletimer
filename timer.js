@@ -54,6 +54,13 @@ function applyTheme(id) {
 	if (theme && meta) meta.setAttribute('content', theme.meta);
 }
 
+// Task colours are handed out by list position, not by a hash of the title: the app
+// keeps no history, so a stable colour per ticket buys nothing, while stepping through
+// the palette guarantees neighbours in the list always differ. STEP is coprime with
+// TASK_COLOUR_COUNT, so all eight are used before the sequence wraps around.
+const TASK_COLOUR_COUNT = 8;
+const TASK_COLOUR_STEP = 3;
+
 // Task ids must never be derived from the list length: after a removal the next
 // id would collide with an existing one, and Vue uses id as the :key — two rows
 // sharing a key means it can reuse the wrong DOM node.
@@ -79,6 +86,10 @@ var app = new Vue({
 		viewMode: 'tasks',
 		timerReadable: '',
 		elapsedSeconds: 0,
+		// separate from timedTask, which lingers for 320ms so the focus view can
+		// slide out. elapsedSeconds lingers with it, so without this flag the day
+		// total would count the finished session twice during that window.
+		timerRunning: false,
 		timerInterval: null,
 		totalReadable: '',
 		todaysDate: new Date().toLocaleDateString(),
@@ -88,6 +99,7 @@ var app = new Vue({
 		jiraSubdomainDraft: '',
 		dayGoalHours: loadDayGoal(),
 		dayGoalDraft: '',
+		hoveredSegment: null,
 		themes: THEMES,
 		theme: loadTheme(),
 		themeDraft: '',
@@ -103,6 +115,32 @@ var app = new Vue({
 			const sub = this.jiraSubdomainDraft.trim();
 			return sub ? 'https://' + sub + '.atlassian.net/browse/' : '';
 		},
+		// proportional make-up of the day. The denominator is the goal, or the total
+		// once that runs past it, so the bar never overflows its own track.
+		dayBarSegments: function () {
+			var scale = Math.max(this.totalSeconds, this.dayGoalSeconds) || 1;
+			var self = this;
+			return this.tasks.map(function (task, index) {
+				return {
+					id: task.id,
+					title: task.title,
+					colour: self.taskColour(index),
+					width: task.secondsSpent / scale * 100 + '%',
+					readable: self.formatSecondsAsReadable(task.secondsSpent, false)
+				};
+			});
+		},
+		// only shown once the day runs over the goal, marking where the goal sat
+		dayBarGoalLeft: function () {
+			if (this.totalSeconds <= this.dayGoalSeconds) return null;
+			return (this.dayGoalSeconds / this.totalSeconds * 100) + '%';
+		},
+		dayBarRemaining: function () {
+			var left = this.dayGoalSeconds - this.totalSeconds;
+			return left > 0
+				? this.formatSecondsAsReadable(left, false) + ' to go'
+				: this.formatSecondsAsReadable(-left, false) + ' over';
+		},
 		themeLabel: function () {
 			const draft = this.themeDraft;
 			const theme = THEMES.find(function (t) { return t.id === draft; });
@@ -115,7 +153,7 @@ var app = new Vue({
 			this.tasks.forEach(function (task) {
 				sum += task.secondsSpent;
 			});
-			return sum + (this.timedTask ? this.elapsedSeconds : 0);
+			return sum + (this.timerRunning ? this.elapsedSeconds : 0);
 		},
 		dayGoalSeconds: function () {
 			return this.dayGoalHours * 3600;
@@ -287,6 +325,7 @@ var app = new Vue({
 		startTimer: function (task) {
 			if (null == this.timedTask) {
 				this.timedTask = task;
+				this.timerRunning = true;
 				this.viewMode = 'focus';
 				this.startedAt = Date.now();
 				this.elapsedSeconds = 0;
@@ -319,6 +358,10 @@ var app = new Vue({
             return includeSeconds
                 ? hours + 'h ' + minutes + 'm ' + seconds + 's'
                 : hours + 'h ' + minutes + 'm';
+		},
+
+		taskColour: function (index) {
+			return 'var(--tc-' + ((index * TASK_COLOUR_STEP) % TASK_COLOUR_COUNT + 1) + ')';
 		},
 
 		// H:MM — compact form used by the day-goal readout
@@ -378,6 +421,10 @@ var app = new Vue({
 
 		stopTimer: function () {
 			if (null != this.timedTask) {
+				// stop counting immediately; timedTask and elapsedSeconds stay put
+				// until the slide-out finishes
+				this.timerRunning = false;
+
 				var ranForSeconds = Math.floor((Date.now() - this.startedAt) / 1000);
 				//console.log('task ran for ' + ranForSeconds + 's -- STOPPED');
 

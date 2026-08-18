@@ -140,7 +140,7 @@
 								</tr>
 							</thead>
 							<tbody>
-								<tr v-for="task in tasks"
+								<tr v-for="(task, index) in tasks"
 								    class="task"
 								    :key="task.id"
 								    :class="{ 'task--running': task == timedTask }">
@@ -150,7 +150,10 @@
 										</button>
 									</td>
 									<td class="col-title">
-										<span v-show="task != editedTask"
+										<span class="task-dot" aria-hidden="true"
+										      v-show="task != editedTask"
+										      :style="{ background: taskColour(index) }"></span><span
+										      v-show="task != editedTask"
 										      class="task-title"
 										      @dblclick="editTask(task)"
 										      v-html="formatAsJiraLink(task.title)"></span>
@@ -189,6 +192,35 @@
 								</tr>
 							</tfoot>
 						</table>
+
+						<!-- how the day is made up, proportionally. Not a timeline: the app
+						     knows how much time each task took, never when, so the segments
+						     follow list order. Kept out of print because print.css carries
+						     its own palette and has no --tc-* tokens. -->
+						<div class="day-bar-wrap no-print" aria-hidden="true">
+							<div class="day-bar" @mouseleave="hoveredSegment = null">
+								<i v-for="seg in dayBarSegments"
+								   :key="seg.id"
+								   :style="{ width: seg.width, background: seg.colour }"
+								   @mouseenter="hoveredSegment = seg"></i>
+								<div class="day-bar-goal"
+								     v-if="dayBarGoalLeft"
+								     :style="{ left: dayBarGoalLeft }"></div>
+							</div>
+							<!-- the left label doubles as the read-out: hovering a segment
+							     swaps the day total for that task's name. Kept in flow rather
+							     than floated above the cursor, so a long name can never clip
+							     off the edge of the card or cover the bar itself. -->
+							<div class="day-bar-labels">
+								<span class="day-bar-name" v-if="hoveredSegment">
+									<span class="task-dot"
+									      :style="{ background: hoveredSegment.colour }"></span>{{ hoveredSegment.title }}
+									<span class="day-bar-time">{{ hoveredSegment.readable }}</span>
+								</span>
+								<span v-else>{{ goalProgressReadable }}</span>
+								<span>{{ dayBarRemaining }}</span>
+							</div>
+						</div>
 					</section>
 
 					<div class="new-task-wrap no-print">
