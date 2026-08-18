@@ -551,16 +551,16 @@ a:hover { text-decoration: underline; }
     overflow: visible;
 }
 
-/* hours (innermost, thick orange arc — like the orange progress in inspiration) */
-.ring-hours-track,
-.ring-hours-progress {
+/* the day against the goal (innermost, thick arc) */
+.ring-day-track,
+.ring-day-progress {
     fill: none;
     stroke-width: 7;
     stroke-linecap: round;
     stroke-dasharray: 490.088;     /* 2π × 78 */
 }
-.ring-hours-track    { stroke: var(--track); }
-.ring-hours-progress {
+.ring-day-track    { stroke: var(--track); }
+.ring-day-progress {
     stroke: url(#ring-grad);
     transition: stroke-dashoffset 480ms ease-out;
 }
@@ -668,8 +668,8 @@ thead, tbody, tfoot { display: block; }
 
 tr {
     display: grid;
-    grid-template-columns: auto 1fr auto auto auto;
-    grid-template-areas: "play title total pill remove";
+    grid-template-columns: auto auto 1fr auto auto auto;
+    grid-template-areas: "drag play title total pill remove";
     gap: var(--s3);
     align-items: center;
     padding: var(--s3) var(--s2);
@@ -694,6 +694,7 @@ tbody tr.task:first-child { border-top: 0; }
 tbody tr.task:hover { background: var(--row-hover); }
 tbody tr.task.task--running { background: var(--accent-soft); }
 
+.col-drag   { grid-area: drag; }
 .col-play   { grid-area: play; }
 .col-title  { grid-area: title; min-width: 0; }
 .col-total  {
@@ -707,6 +708,35 @@ tbody tr.task.task--running { background: var(--accent-soft); }
     letter-spacing: -0.01em;
 }
 .col-pill   { grid-area: pill; }
+
+/* the hover preview sits on top of the cell rather than in it, so the column keeps
+   its width and the pill stays put. It is right-aligned like the total itself and
+   carries the row background so it stays readable over a long task name. */
+.col-total { position: relative; }
+
+.total-preview {
+    position: absolute;
+    right: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    display: flex;
+    align-items: baseline;
+    white-space: nowrap;
+    padding-left: var(--s3);
+    background: var(--bg);
+    font-weight: 600;
+}
+.total-was {
+    color: var(--ink-3);
+    font-weight: 500;
+    font-size: 0.88rem;
+}
+.total-arrow {
+    color: var(--ink-3);
+    font-weight: 400;
+    margin: 0 5px;
+}
+.total-now { color: var(--accent); }
 .col-remove { grid-area: remove; }
 
 .task-title {
@@ -790,6 +820,26 @@ tbody tr.task.task--running { background: var(--accent-soft); }
     background: var(--separator);
     margin: 4px 2px;
 }
+
+/* drag handle — native HTML5 dragging, so mouse only. The handle is hidden
+   below 560px because touch does not fire drag events at all; the list simply
+   stays in the order it was built there. */
+.drag-handle {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 20px;
+    height: 28px;
+    cursor: grab;
+    color: var(--separator);
+    transition: color 200ms ease;
+}
+.drag-handle:active { cursor: grabbing; }
+tr.task:hover .drag-handle { color: var(--ink-3); }
+.drag-handle .material-icons { font-size: 18px; }
+
+/* the row being carried, so it is clear what is moving */
+tr.task--dragging { opacity: 0.45; }
 
 /* remove */
 .remove-btn {
@@ -952,6 +1002,8 @@ tfoot .col-total {
     .pause-btn--lg { height: 50px; padding: 0 48px; }
 
     thead { display: none; }
+
+    .col-drag { display: none; }
 
     tr.task {
         grid-template-columns: auto 1fr auto auto;

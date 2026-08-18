@@ -132,6 +132,7 @@
 						<table>
 							<thead>
 								<tr>
+									<th class="col-drag"></th>
 									<th class="col-play"></th>
 									<th class="col-title">name</th>
 									<th class="col-total">total</th>
@@ -140,10 +141,23 @@
 								</tr>
 							</thead>
 							<tbody>
-								<tr v-for="(task, index) in tasks"
+								<tr v-for="task in tasks"
 								    class="task"
 								    :key="task.id"
-								    :class="{ 'task--running': task == timedTask }">
+								    :class="{ 'task--running': task == timedTask,
+								              'task--dragging': task == draggedTask }"
+								    @dragenter="dragOver(task)"
+								    @dragover.prevent>
+									<td class="col-drag no-print">
+										<span class="drag-handle"
+										      draggable="true"
+										      @dragstart="startDrag(task)"
+										      @dragend="endDrag()"
+										      title="drag to reorder"
+										      aria-label="drag to reorder">
+											<i class="material-icons" aria-hidden="true">drag_indicator</i>
+										</span>
+									</td>
 									<td class="col-play no-print">
 										<button class="play-btn" @click="startTimer(task)" aria-label="start timer">
 											<i class="material-icons" aria-hidden="true">play_arrow</i>
@@ -152,7 +166,7 @@
 									<td class="col-title">
 										<span class="task-dot" aria-hidden="true"
 										      v-show="task != editedTask"
-										      :style="{ background: taskColour(index) }"></span><span
+										      :style="{ background: taskColour(task) }"></span><span
 										      v-show="task != editedTask"
 										      class="task-title"
 										      @dblclick="editTask(task)"
@@ -165,14 +179,37 @@
 										       @keyup.enter="doneEditing(task)"
 										       @keyup.esc="cancelEditing(task)">
 									</td>
-									<td class="col-total">{{ task.timeSpentReadable }}</td>
+									<td class="col-total">
+										<!-- during hover the cell shows where the button would land.
+										     The preview is absolutely placed so reserving no space is
+										     needed and the pill never shifts sideways. -->
+										<span class="total-preview" v-if="previewFor(task)">
+											<span class="total-was">{{ previewFor(task).was }}</span>
+											<span class="total-arrow" aria-hidden="true">→</span>
+											<span class="total-now">{{ previewFor(task).becomes }}</span>
+										</span>
+										<span v-else>{{ task.timeSpentReadable }}</span>
+									</td>
 									<td class="col-pill no-print">
-										<div class="pill" role="group" aria-label="adjust time">
-											<button @click="addHour(task)"      title="add 1h"      aria-label="add 1 hour">+1h</button>
-											<button @click="removeHour(task)"   title="remove 1h"   aria-label="remove 1 hour">−1h</button>
+										<div class="pill" role="group" aria-label="adjust time"
+										     @mouseleave="clearPreview()">
+											<button @click="adjust(task, 'addHour')"
+											        @mouseenter="showPreview(task, 'addHour')"
+											        @focus="showPreview(task, 'addHour')"
+											        aria-label="add 1 hour">+1h</button>
+											<button @click="adjust(task, 'removeHour')"
+											        @mouseenter="showPreview(task, 'removeHour')"
+											        @focus="showPreview(task, 'removeHour')"
+											        aria-label="remove 1 hour">−1h</button>
 											<span class="pill-divider" aria-hidden="true"></span>
-											<button @click="addQuarter(task)"   title="add 15m"     aria-label="add 15 minutes">+15</button>
-											<button @click="removeQuarter(task)" title="remove 15m" aria-label="remove 15 minutes">−15</button>
+											<button @click="adjust(task, 'addQuarter')"
+											        @mouseenter="showPreview(task, 'addQuarter')"
+											        @focus="showPreview(task, 'addQuarter')"
+											        aria-label="add 15 minutes">+15</button>
+											<button @click="adjust(task, 'removeQuarter')"
+											        @mouseenter="showPreview(task, 'removeQuarter')"
+											        @focus="showPreview(task, 'removeQuarter')"
+											        aria-label="remove 15 minutes">−15</button>
 										</div>
 									</td>
 									<td class="col-remove no-print">
@@ -184,6 +221,7 @@
 							</tbody>
 							<tfoot>
 								<tr>
+									<td class="col-drag"></td>
 									<td class="col-play"></td>
 									<td class="col-title"><span class="total-label">cumulative</span></td>
 									<td class="col-total">{{ totalReadable }}</td>
@@ -235,7 +273,7 @@
 				<section class="view focus-view no-print" v-if="timedTask"
 				         :inert="viewMode === 'tasks'">
 					<div class="focus-stage">
-						<div class="focus-total">Total — {{ totalReadable }}</div>
+						<div class="focus-total">Total — {{ totalLiveReadable }} · goal {{ formatSecondsAsHM(dayGoalSeconds) }}</div>
 						<div class="ring-wrap ring-wrap--lg">
 							<svg class="ring" viewBox="0 0 240 240" aria-hidden="true">
 								<defs>
@@ -244,10 +282,10 @@
 										<stop class="grad-end" offset="100%"/>
 									</linearGradient>
 								</defs>
-								<!-- hours (innermost, thick) -->
-								<circle class="ring-hours-track"    cx="120" cy="120" r="78"></circle>
-								<circle class="ring-hours-progress" cx="120" cy="120" r="78"
-								        :style="{ strokeDashoffset: hoursOffset }"></circle>
+								<!-- the day against the goal (innermost, thick) -->
+								<circle class="ring-day-track"    cx="120" cy="120" r="78"></circle>
+								<circle class="ring-day-progress" cx="120" cy="120" r="78"
+								        :style="{ strokeDashoffset: dayOffset }"></circle>
 
 								<!-- minutes (middle, slim) -->
 								<circle class="ring-minutes-track"    cx="120" cy="120" r="88"></circle>

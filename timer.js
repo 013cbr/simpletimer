@@ -54,9 +54,22 @@ function applyTheme(id) {
 	if (theme && meta) meta.setAttribute('content', theme.meta);
 }
 
-// Task colours are handed out by list position, not by a hash of the title: the app
-// keeps no history, so a stable colour per ticket buys nothing, while stepping through
-// the palette guarantees neighbours in the list always differ. STEP is coprime with
+// What each adjust button makes of a value, as pure functions. The button and the
+// hover preview both go through this table, so the preview can never disagree with
+// what pressing actually does. All four snap to a quarter or an hour and drop the
+// remainder — that is deliberate, but it means the change is not always the amount
+// on the button, which is exactly why the preview is worth showing.
+const ADJUST = {
+	addHour:       function (s) { return s + 3600; },
+	removeHour:    function (s) { return Math.max(s - 3600, 0); },
+	addQuarter:    function (s) { return Math.floor((s + 900) / 900) * 900; },
+	removeQuarter: function (s) { return Math.max(Math.ceil((s - 900) / 900) * 900, 0); },
+};
+
+// Task colours are stepped through the palette by task id rather than by hash or by
+// list position. Ids are handed out in ascending order, so the spread is the same as
+// by position, but a colour then survives a removal or a re-sort — with positions,
+// deleting one task recoloured every task below it. STEP is coprime with
 // TASK_COLOUR_COUNT, so all eight are used before the sequence wraps around.
 const TASK_COLOUR_COUNT = 8;
 const TASK_COLOUR_STEP = 3;
@@ -100,6 +113,8 @@ var app = new Vue({
 		dayGoalHours: loadDayGoal(),
 		dayGoalDraft: '',
 		hoveredSegment: null,
+		draggedTask: null,
+		preview: null,
 		themes: THEMES,
 		theme: loadTheme(),
 		themeDraft: '',
@@ -120,11 +135,11 @@ var app = new Vue({
 		dayBarSegments: function () {
 			var scale = Math.max(this.totalSeconds, this.dayGoalSeconds) || 1;
 			var self = this;
-			return this.tasks.map(function (task, index) {
+			return this.tasks.map(function (task) {
 				return {
 					id: task.id,
 					title: task.title,
-					colour: self.taskColour(index),
+					colour: self.taskColour(task),
 					width: task.secondsSpent / scale * 100 + '%',
 					readable: self.formatSecondsAsReadable(task.secondsSpent, false)
 				};
@@ -200,11 +215,20 @@ var app = new Vue({
 			var fraction = (this.elapsedSeconds % 3600) / 3600;
 			return c * (1 - fraction);
 		},
-		// stroke-dashoffset for hours ring (r=78, full cycle = 12h)
-		hoursOffset: function () {
+		// stroke-dashoffset for the inner ring (r=78). This used to run on a 12-hour
+		// cycle of the current session, which meant it barely moved: 2% after a
+		// quarter of an hour, 6% after three quarters. It now carries the day
+		// against the goal, which is the number worth watching while working.
+		dayOffset: function () {
 			var c = 2 * Math.PI * 78;
-			var fraction = (this.elapsedSeconds % 43200) / 43200;
+			var fraction = this.dayGoalSeconds > 0
+				? Math.min(this.totalSeconds / this.dayGoalSeconds, 1)
+				: 0;
 			return c * (1 - fraction);
+		},
+		// the live day total, so the line above the ring agrees with the ring itself
+		totalLiveReadable: function () {
+			return this.formatSecondsAsReadable(this.totalSeconds, false);
 		},
 		// 60 evenly-spaced tick coordinates around the outer ring
 		// (svg has rotate(-90deg), so angle 0 = 12 o'clock after rotation)
@@ -279,47 +303,34 @@ var app = new Vue({
 			this.updateTotal();
 		},
 
-		addHour: function (task) {
-			task.secondsSpent += 3600;
+		adjust: function (task, key) {
+			task.secondsSpent = ADJUST[key](task.secondsSpent);
 			task.timeSpentReadable = this.formatSecondsAsReadable(task.secondsSpent);
 
 			this.updateTotal();
+
+			// keep the preview live, so holding the cursor still and clicking again
+			// shows where the next press lands
+			this.showPreview(task, key);
 		},
 
-		// round up to the nearest 15 minutes
-		addQuarter: function (task) {
-			task.secondsSpent += 900;
-			task.secondsSpent = Math.floor(task.secondsSpent / 900) * 900;
-
-			task.timeSpentReadable = this.formatSecondsAsReadable(task.secondsSpent);
-
-			this.updateTotal();
+		showPreview: function (task, key) {
+			// same format as the total already in that cell, so hovering only adds the
+			// arrow and the result — it does not restyle the number you were reading
+			this.preview = {
+				id: task.id,
+				was: this.formatSecondsAsReadable(task.secondsSpent),
+				becomes: this.formatSecondsAsReadable(ADJUST[key](task.secondsSpent))
+			};
 		},
 
-		removeHour: function (task) {
-			task.secondsSpent -= 3600;
-
-            if (task.secondsSpent < 0) {
-				task.secondsSpent = 0;
-			}
-
-			task.timeSpentReadable = this.formatSecondsAsReadable(task.secondsSpent);
-
-			this.updateTotal();
+		clearPreview: function () {
+			this.preview = null;
 		},
 
-		// round down to the nearest 15 minutes
-		removeQuarter: function (task) {
-			task.secondsSpent -= 900;
-			task.secondsSpent = Math.ceil(task.secondsSpent / 900) * 900;
-
-            if (task.secondsSpent < 0) {
-				task.secondsSpent = 0;
-			}
-
-			task.timeSpentReadable = this.formatSecondsAsReadable(task.secondsSpent);
-
-			this.updateTotal();
+		// null unless this row is the one being hovered
+		previewFor: function (task) {
+			return this.preview && this.preview.id === task.id ? this.preview : null;
 		},
 
 		startTimer: function (task) {
@@ -360,8 +371,32 @@ var app = new Vue({
                 : hours + 'h ' + minutes + 'm';
 		},
 
-		taskColour: function (index) {
-			return 'var(--tc-' + ((index * TASK_COLOUR_STEP) % TASK_COLOUR_COUNT + 1) + ')';
+		// Reordering by hand: the row is moved as soon as the pointer enters another
+		// one, so there is no drop indicator to maintain. Rows are keyed on task.id
+		// and colours come from that id too, so a task keeps its own colour while it
+		// travels instead of taking on the colour of the slot it lands in.
+		startDrag: function (task) {
+			this.draggedTask = task;
+		},
+
+		dragOver: function (task) {
+			if (!this.draggedTask || task === this.draggedTask) {
+				return;
+			}
+			var from = this.tasks.indexOf(this.draggedTask);
+			var to = this.tasks.indexOf(task);
+			if (from === -1 || to === -1) {
+				return;
+			}
+			this.tasks.splice(to, 0, this.tasks.splice(from, 1)[0]);
+		},
+
+		endDrag: function () {
+			this.draggedTask = null;
+		},
+
+		taskColour: function (task) {
+			return 'var(--tc-' + ((task.id * TASK_COLOUR_STEP) % TASK_COLOUR_COUNT + 1) + ')';
 		},
 
 		// H:MM — compact form used by the day-goal readout

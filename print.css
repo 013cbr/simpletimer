@@ -172,7 +172,7 @@
 
 	/* action columns carry no meaning on paper; hiding them in every
 	   row group keeps the name and total columns aligned */
-	.col-play, .col-pill, .col-remove { display: none; }
+	.col-drag, .col-play, .col-pill, .col-remove { display: none; }
 
 	/* ---------- page breaks ---------- */
 
