@@ -292,7 +292,10 @@ var app = new Vue({
 			let month = (d.getMonth() + 1).toString();
 			month = month.length < 2 ? '0' + month : month;
 
-			navigator.clipboard.writeText(d.getFullYear() + '' + month + '' + d.getDate());
+			let day = d.getDate().toString();
+			day = day.length < 2 ? '0' + day : day;
+
+			navigator.clipboard.writeText(d.getFullYear() + '' + month + '' + day);
 			window.print();
 		},
 	},	// end of methods
