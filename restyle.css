@@ -16,7 +16,25 @@
     --accent-press: #DC5934;
     --accent-soft:  rgba(242, 108, 68, 0.10);
     --accent-ink:   #FFFFFF;
+    --accent-deep:  #B8431F;                    /* overtime lap on the goal ring */
+    --accent-ring:  rgba(242, 108, 68, 0.22);   /* focus glow on inputs */
     --danger:       #FF3B30;
+    --danger-soft:  rgba(255, 59, 48, 0.10);
+
+    /* ring gradient stops, read by the <stop> elements in index.html */
+    --g1: #F58A66;
+    --g2: #DC5934;
+
+    /* surfaces that are tinted rather than coloured — these have to flip
+       from black-on-light to white-on-dark, so they cannot stay hard-coded */
+    --track:      rgba(0, 0, 0, 0.05);   /* hour + minute ring tracks */
+    --track-2:    rgba(0, 0, 0, 0.07);   /* goal ring track */
+    --tick:       rgba(0, 0, 0, 0.10);   /* second ticks */
+    --row-hover:  rgba(0, 0, 0, 0.02);
+    --bg-fade:    rgba(255, 255, 255, 0);   /* transparent end of the sticky fade */
+    --shadow-pop: 0 12px 36px rgba(0, 0, 0, 0.10), 0 2px 6px rgba(0, 0, 0, 0.04);
+    --btn-primary-hover:  #2C2C2E;
+    --btn-primary-active: #1A1A1C;
 
     --r-lg:   18px;
     --r-md:   12px;
@@ -31,6 +49,79 @@
     --s6: 40px;
 
     --font: "Barlow Condensed", "Oswald", "Helvetica Neue", Arial, sans-serif;
+}
+
+/* ============================================================
+   dark themes
+
+   The six share one graphite ground and differ only in accent and
+   ring gradient, so the shared block is matched with a prefix
+   selector and each accent block simply overrides on top of it.
+   Light stays the default in :root and is deliberately untouched.
+   ============================================================ */
+
+[data-theme^="dark-"] {
+    --bg:           #131315;
+    --surface:      #1B1B1E;
+    --surface-2:    #252529;
+    --ink:          #F5F5F7;
+    --ink-2:        #A1A1A6;
+    --ink-3:        #77777D;
+    --separator:    #3A3A3F;
+    --separator-2:  #2A2A2F;
+    /* accents are bright on dark, so text sitting on them goes dark */
+    --accent-ink:   #16130F;
+    --danger:       #FF6961;
+    --danger-soft:  rgba(255, 105, 97, 0.14);
+
+    --track:      rgba(255, 255, 255, 0.08);
+    --track-2:    rgba(255, 255, 255, 0.10);
+    --tick:       rgba(255, 255, 255, 0.13);
+    --row-hover:  rgba(255, 255, 255, 0.03);
+    --bg-fade:    rgba(19, 19, 21, 0);
+    --shadow-pop: 0 12px 36px rgba(0, 0, 0, 0.55), 0 2px 6px rgba(0, 0, 0, 0.40);
+    /* btn-primary is ink-on-surface, so on dark it becomes a light button */
+    --btn-primary-hover:  #E4E4E8;
+    --btn-primary-active: #CFCFD4;
+}
+
+/* Each theme is named after its gradient, so the accent is picked from
+   inside that gradient's own range — no theme wears another's colours. */
+
+[data-theme="dark-sunset"] {          /* amber → coral */
+    --accent:      #FF9E5C;
+    --accent-soft: rgba(255, 158, 92, 0.15);
+    --accent-deep: #C46A2E;
+    --accent-ring: rgba(255, 158, 92, 0.28);
+    --g1: #FFC46B;
+    --g2: #FF7A4D;
+}
+
+[data-theme="dark-lagoon"] {          /* mint → cyan */
+    --accent:      #56D3D0;
+    --accent-soft: rgba(86, 211, 208, 0.15);
+    --accent-deep: #2A9E96;
+    --accent-ring: rgba(86, 211, 208, 0.28);
+    --g1: #6FE8C4;
+    --g2: #3FBEDC;
+}
+
+[data-theme="dark-twilight"] {        /* ice blue → violet */
+    --accent:      #9799FF;
+    --accent-soft: rgba(151, 153, 255, 0.15);
+    --accent-deep: #6A6CD1;
+    --accent-ring: rgba(151, 153, 255, 0.28);
+    --g1: #7FA6FF;
+    --g2: #B08BFF;
+}
+
+[data-theme="dark-glow"] {            /* violet → pink */
+    --accent:      #D48ADB;
+    --accent-soft: rgba(212, 138, 219, 0.15);
+    --accent-deep: #A05FA8;
+    --accent-ring: rgba(212, 138, 219, 0.28);
+    --g1: #B79BFF;
+    --g2: #FF7ABF;
 }
 
 *, *::before, *::after { box-sizing: border-box; }
@@ -62,6 +153,11 @@ button {
 input { font: inherit; color: inherit; }
 
 a { color: var(--accent); text-decoration: none; }
+
+/* the <stop> elements in index.html carry these classes so the ring
+   gradient follows the active theme */
+.grad-start { stop-color: var(--g1); }
+.grad-end   { stop-color: var(--g2); }
 a:hover { text-decoration: underline; }
 
 [v-cloak] { display: none; }
@@ -108,6 +204,27 @@ a:hover { text-decoration: underline; }
 }
 .app-header .week { color: var(--ink-3); }
 
+/* ---------- theme picker ---------- */
+
+.theme-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--s2);
+}
+
+.theme-swatch {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    border: 1px solid var(--separator);
+    outline: 2px solid transparent;
+    outline-offset: 2px;
+    transition: outline-color 160ms ease, transform 120ms ease;
+}
+.theme-swatch:hover  { transform: scale(1.08); }
+.theme-swatch:active { transform: scale(0.96); }
+.theme-swatch--on    { outline-color: var(--ink); }
+
 /* ---------- day goal ---------- */
 
 .goal-inline {
@@ -140,7 +257,7 @@ a:hover { text-decoration: underline; }
     stroke-linecap: round;
     stroke-dasharray: 106.814;     /* 2π × 17 */
 }
-.goal-track    { stroke: rgba(0, 0, 0, 0.07); stroke-width: 4; }
+.goal-track    { stroke: var(--track-2); stroke-width: 4; }
 .goal-progress {
     stroke: url(#goal-grad);
     stroke-width: 4;
@@ -153,7 +270,7 @@ a:hover { text-decoration: underline; }
     stroke-width: 7.5;
 }
 .goal-overtime {
-    stroke: #B8431F;
+    stroke: var(--accent-deep);
     stroke-width: 4;
     transition: stroke-dashoffset 480ms ease-out;
 }
@@ -232,7 +349,7 @@ a:hover { text-decoration: underline; }
     background: var(--surface);
     border: 1px solid var(--separator-2);
     border-radius: var(--r-md);
-    box-shadow: 0 12px 36px rgba(0, 0, 0, 0.10), 0 2px 6px rgba(0, 0, 0, 0.04);
+    box-shadow: var(--shadow-pop);
     padding: var(--s4);
     z-index: 30;
     display: flex;
@@ -259,7 +376,7 @@ a:hover { text-decoration: underline; }
 }
 .settings-input:focus {
     border-color: var(--accent);
-    box-shadow: 0 0 0 3px rgba(242, 108, 68, 0.22);
+    box-shadow: 0 0 0 3px var(--accent-ring);
 }
 
 .settings-preview {
@@ -304,8 +421,8 @@ a:hover { text-decoration: underline; }
     background: var(--ink);
     transition: background 200ms ease;
 }
-.btn-primary:hover  { background: #2C2C2E; }
-.btn-primary:active { background: #1A1A1C; }
+.btn-primary:hover  { background: var(--btn-primary-hover); }
+.btn-primary:active { background: var(--btn-primary-active); }
 
 /* ---------- view switcher ---------- */
 
@@ -419,7 +536,7 @@ a:hover { text-decoration: underline; }
     stroke-linecap: round;
     stroke-dasharray: 490.088;     /* 2π × 78 */
 }
-.ring-hours-track    { stroke: rgba(0, 0, 0, 0.05); }
+.ring-hours-track    { stroke: var(--track); }
 .ring-hours-progress {
     stroke: url(#ring-grad);
     transition: stroke-dashoffset 480ms ease-out;
@@ -433,7 +550,7 @@ a:hover { text-decoration: underline; }
     stroke-linecap: round;
     stroke-dasharray: 552.920;     /* 2π × 88 */
 }
-.ring-minutes-track    { stroke: rgba(0, 0, 0, 0.05); }
+.ring-minutes-track    { stroke: var(--track); }
 .ring-minutes-progress {
     stroke: url(#ring-grad);
     transition: stroke-dashoffset 320ms ease-out;
@@ -441,7 +558,7 @@ a:hover { text-decoration: underline; }
 
 /* seconds (60 outer tick marks — like the dial in the inspiration) */
 .ring-tick {
-    stroke: rgba(0, 0, 0, 0.10);
+    stroke: var(--tick);
     stroke-width: 1.6;
     stroke-linecap: round;
     transition: stroke 240ms ease;
@@ -551,7 +668,7 @@ tbody tr.task {
     transition: background 200ms ease;
 }
 tbody tr.task:first-child { border-top: 0; }
-tbody tr.task:hover { background: rgba(0, 0, 0, 0.02); }
+tbody tr.task:hover { background: var(--row-hover); }
 tbody tr.task.task--running { background: var(--accent-soft); }
 
 .col-play   { grid-area: play; }
@@ -590,7 +707,7 @@ tbody tr.task.task--running { background: var(--accent-soft); }
 }
 .edit:focus {
     border-color: var(--accent);
-    box-shadow: 0 0 0 3px rgba(242, 108, 68, 0.22);
+    box-shadow: 0 0 0 3px var(--accent-ring);
 }
 
 /* play button — apple secondary style */
@@ -663,7 +780,7 @@ tbody tr.task.task--running { background: var(--accent-soft); }
     transition: background 200ms ease, color 200ms ease;
 }
 .remove-btn:hover {
-    background: rgba(255, 59, 48, 0.10);
+    background: var(--danger-soft);
     color: var(--danger);
 }
 .remove-btn .material-icons { font-size: 18px; }
@@ -696,7 +813,7 @@ tfoot .col-total {
     bottom: 0;
     margin-top: auto;
     padding: var(--s4) 0;
-    background: linear-gradient(to bottom, rgba(251, 251, 253, 0) 0%, var(--bg) 28px);
+    background: linear-gradient(to bottom, var(--bg-fade) 0%, var(--bg) 28px);
     backdrop-filter: blur(8px);
     -webkit-backdrop-filter: blur(8px);
 }

@@ -20,6 +20,15 @@
 	<link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
 	<script src="https://unpkg.com/vue@2.4.2/dist/vue.js"></script>
 
+	<script>
+		// apply the stored theme before the stylesheet paints, otherwise dark
+		// users get a white flash on every load; timer.js validates it later
+		try {
+			var storedTheme = localStorage.getItem('simpletimer.theme');
+			if (storedTheme) document.documentElement.setAttribute('data-theme', storedTheme);
+		} catch (e) {}
+	</script>
+
 	<link href="restyle.css" rel="stylesheet" media="screen">
 	<link href="print.css" rel="stylesheet" media="print">
 </head>
@@ -35,8 +44,8 @@
 						<svg class="goal-ring" viewBox="0 0 42 42" aria-hidden="true">
 							<defs>
 								<linearGradient id="goal-grad" x1="0" y1="0" x2="1" y2="1">
-									<stop offset="0%"   stop-color="#F58A66"/>
-									<stop offset="100%" stop-color="#DC5934"/>
+									<stop class="grad-start" offset="0%"/>
+									<stop class="grad-end" offset="100%"/>
 								</linearGradient>
 							</defs>
 							<circle class="goal-track" cx="21" cy="21" r="17"></circle>
@@ -75,6 +84,21 @@
 						       @keyup.esc="closeSettings()">
 						<div class="settings-preview" v-if="jiraUrlPreview">{{ jiraUrlPreview }}</div>
 						<div class="settings-preview settings-preview--empty" v-else>Tickets will not be linked</div>
+
+						<label class="settings-label settings-label--spaced">Theme</label>
+						<div class="theme-grid" role="radiogroup" aria-label="Theme">
+							<button v-for="t in themes"
+							        :key="t.id"
+							        class="theme-swatch"
+							        :class="{ 'theme-swatch--on': t.id === themeDraft }"
+							        :style="{ background: t.swatch }"
+							        :title="t.label"
+							        :aria-label="t.label"
+							        :aria-checked="t.id === themeDraft"
+							        role="radio"
+							        @click="previewTheme(t.id)"></button>
+						</div>
+						<div class="settings-preview">{{ themeLabel }}</div>
 
 						<label class="settings-label settings-label--spaced" for="day-goal-input">Day goal</label>
 						<input id="day-goal-input" type="number" class="settings-input"
@@ -181,8 +205,8 @@
 							<svg class="ring" viewBox="0 0 240 240" aria-hidden="true">
 								<defs>
 									<linearGradient id="ring-grad" x1="0" y1="0" x2="1" y2="1">
-										<stop offset="0%"   stop-color="#F58A66"/>
-										<stop offset="100%" stop-color="#DC5934"/>
+										<stop class="grad-start" offset="0%"/>
+										<stop class="grad-end" offset="100%"/>
 									</linearGradient>
 								</defs>
 								<!-- hours (innermost, thick) -->

@@ -24,6 +24,36 @@ function loadJiraSubdomain() {
 	return '';
 }
 
+// id must match the [data-theme=...] selectors in restyle.css. swatch mirrors
+// that theme's --g1/--g2 ring gradient; light gets a hard split instead of a
+// blend so it reads as "the light one" rather than as another orange.
+const THEMES = [
+	{ id: 'light',         label: 'Light',    meta: '#DC5934',
+	  swatch: 'linear-gradient(135deg, #FFFFFF 0 50%, #F26C44 50% 100%)' },
+	{ id: 'dark-sunset',   label: 'Sunset',   meta: '#131315',
+	  swatch: 'linear-gradient(135deg, #FFC46B, #FF7A4D)' },
+	{ id: 'dark-lagoon',   label: 'Lagoon',   meta: '#131315',
+	  swatch: 'linear-gradient(135deg, #6FE8C4, #3FBEDC)' },
+	{ id: 'dark-twilight', label: 'Twilight', meta: '#131315',
+	  swatch: 'linear-gradient(135deg, #7FA6FF, #B08BFF)' },
+	{ id: 'dark-glow',     label: 'Glow',     meta: '#131315',
+	  swatch: 'linear-gradient(135deg, #B79BFF, #FF7ABF)' },
+];
+
+function loadTheme() {
+	const stored = localStorage.getItem('simpletimer.theme');
+	return THEMES.some(function (t) { return t.id === stored; }) ? stored : 'light';
+}
+
+function applyTheme(id) {
+	document.documentElement.setAttribute('data-theme', id);
+
+	// keep the mobile status bar in step with the theme
+	const theme = THEMES.find(function (t) { return t.id === id; });
+	const meta = document.querySelector('meta[name="theme-color"]');
+	if (theme && meta) meta.setAttribute('content', theme.meta);
+}
+
 function loadDayGoal() {
 	const stored = parseFloat(localStorage.getItem('simpletimer.dayGoalHours'));
 	return Number.isFinite(stored) && stored > 0 ? stored : 8;
@@ -53,6 +83,9 @@ var app = new Vue({
 		jiraSubdomainDraft: '',
 		dayGoalHours: loadDayGoal(),
 		dayGoalDraft: '',
+		themes: THEMES,
+		theme: loadTheme(),
+		themeDraft: '',
 		settingsOpen: false
 	},
 	computed: {
@@ -64,6 +97,11 @@ var app = new Vue({
 		jiraUrlPreview: function () {
 			const sub = this.jiraSubdomainDraft.trim();
 			return sub ? 'https://' + sub + '.atlassian.net/browse/' : '';
+		},
+		themeLabel: function () {
+			const draft = this.themeDraft;
+			const theme = THEMES.find(function (t) { return t.id === draft; });
+			return theme ? theme.label : '';
 		},
 		// live day total — includes the session currently running, so the goal
 		// ring keeps creeping up instead of only jumping on stop
@@ -291,9 +329,17 @@ var app = new Vue({
             return title;
         },
 
+        // applied live so the choice can actually be judged; saveSettings commits
+        // it and closeSettings puts the previously stored theme back
+        previewTheme: function (id) {
+            this.themeDraft = id;
+            applyTheme(id);
+        },
+
         openSettings: function () {
             this.jiraSubdomainDraft = this.jiraSubdomain;
             this.dayGoalDraft = this.dayGoalHours;
+            this.themeDraft = this.theme;
             this.settingsOpen = true;
         },
 
@@ -308,10 +354,15 @@ var app = new Vue({
             this.dayGoalHours = Math.min(goal, 24);
             localStorage.setItem('simpletimer.dayGoalHours', this.dayGoalHours);
 
+            this.theme = this.themeDraft;
+            localStorage.setItem('simpletimer.theme', this.theme);
+
             this.settingsOpen = false;
         },
 
         closeSettings: function () {
+            // drop any live preview that was not saved
+            if (this.themeDraft !== this.theme) applyTheme(this.theme);
             this.settingsOpen = false;
         },
 
@@ -371,6 +422,10 @@ var app = new Vue({
 		}
 	}
 });
+
+// the inline boot script in index.html sets the attribute unvalidated,
+// so re-apply the parsed value here
+applyTheme(app.theme);
 
 // mount
 app.$mount('.timerapp')
