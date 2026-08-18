@@ -1,51 +1,180 @@
+/* ============================================================
+   simple timer — print stylesheet
+
+   NOTE: restyle.css is linked with media="screen", so none of its
+   rules reach the printed page — not the font, and not the :root
+   custom properties either. This file is therefore deliberately
+   self-contained and redeclares the bit of palette and type it needs.
+   ============================================================ */
+
 @media print {
+
 	@page {
-		size: A4 landscape;
+		size: A4 portrait;
+		margin: 16mm 15mm;
 	}
 
-	table, figure {
-		page-break-inside: avoid;
+	:root {
+		--p-ink:       #1D1D1F;
+		--p-ink-2:     #6E6E73;
+		--p-ink-3:     #86868B;
+		--p-accent:    #DC5934;
+		--p-rule:      #D2D2D7;
+		--p-rule-soft: #E8E8ED;
 	}
 
-	.no-print {
-		display: none !important;
+	/* keep the greys and the accent instead of letting the browser
+	   flatten them away to save ink */
+	* {
+		-webkit-print-color-adjust: exact;
+		print-color-adjust: exact;
 	}
 
-	/* restore classic table rendering for print — the screen layout uses
-	   display: grid on rows, which leaves empty tracks when action cells
-	   are hidden by .no-print. */
-	body {
-		background: none;
+	html, body {
+		margin: 0;
+		padding: 0;
+		background: #fff;
+		color: var(--p-ink);
+		font-family: "Barlow Condensed", "Oswald", "Helvetica Neue", Arial, sans-serif;
+		font-size: 11pt;
+		line-height: 1.4;
+		letter-spacing: -0.01em;
 	}
+
+	.no-print   { display: none !important; }
+	.print-only { display: block !important; }
+
+	/* ---------- neutralize the screen layout ---------- */
+
 	.timerapp {
+		display: block;
 		max-width: none;
+		min-height: 0;
+		margin: 0;
 		padding: 0;
 		gap: 0;
-		min-height: 0;
 	}
-	/* neutralize the sliding viewport so the task list renders normally */
+
+	/* the sliding viewport only makes sense on screen */
 	.viewport, .track, .view {
 		display: block;
 		width: auto;
 		transform: none !important;
 		overflow: visible;
 	}
+
 	.tasks {
-		box-shadow: none;
 		background: none;
+		box-shadow: none;
 		padding: 0;
 	}
-	table       { display: table; width: 100%; border-collapse: collapse; }
-	thead       { display: table-header-group; }
-	tbody       { display: table-row-group; }
-	tfoot       { display: table-footer-group; }
-	tr          { display: table-row; padding: 0; gap: 0; border: 0; }
-	th, td      { display: table-cell; padding: 6px 10px; border-bottom: 1px solid #ccc; }
-	thead th    { text-align: left; }
-	.col-total  { text-align: right; }
-	tfoot td    { border-top: 2px solid #333; border-bottom: 0; font-weight: 700; }
 
-	/* action columns have no purpose in print; hiding them in every row
-	   (thead/tbody/tfoot) keeps the remaining name/total columns aligned. */
+	.focus-view { display: none !important; }
+
+	/* ---------- header ---------- */
+
+	.app-header {
+		display: flex;
+		align-items: baseline;
+		justify-content: space-between;
+		gap: 12pt;
+		margin: 0 0 13pt;
+		padding: 0 0 6pt;
+		border-bottom: 1.2pt solid var(--p-ink);
+		/* the screen rules fade this out in focus mode — on paper it always shows */
+		opacity: 1 !important;
+		visibility: visible !important;
+	}
+
+	.app-header .date {
+		font-size: 17pt;
+		font-weight: 600;
+		letter-spacing: -0.02em;
+		color: var(--p-ink);
+		font-variant-numeric: tabular-nums;
+	}
+	.app-header .week {
+		font-weight: 400;
+		color: var(--p-ink-3);
+	}
+
+	.print-goal {
+		font-size: 8pt;
+		font-weight: 600;
+		text-transform: uppercase;
+		letter-spacing: 0.14em;
+		color: var(--p-ink-3);
+		white-space: nowrap;
+		font-variant-numeric: tabular-nums;
+	}
+
+	/* ---------- task table ---------- */
+
+	/* the screen layout puts display:grid on every row, which leaves
+	   empty tracks once the action cells are hidden — restore a real table */
+	table  { display: table; width: 100%; border-collapse: collapse; }
+	thead  { display: table-header-group; }   /* repeats on page 2 and up */
+	tbody  { display: table-row-group; }
+	tfoot  { display: table-footer-group; }
+	tr     { display: table-row; padding: 0; gap: 0; border: 0; background: none !important; }
+	th, td { display: table-cell; vertical-align: baseline; }
+
+	thead th {
+		padding: 0 0 5pt;
+		border-bottom: 0.6pt solid var(--p-rule);
+		text-align: left;
+		font-size: 8pt;
+		font-weight: 600;
+		text-transform: uppercase;
+		letter-spacing: 0.12em;
+		color: var(--p-ink-3);
+	}
+	thead .col-total { text-align: right; }
+
+	tbody td {
+		padding: 6.5pt 0;
+		border-bottom: 0.6pt solid var(--p-rule-soft);
+	}
+
+	.task-title { font-weight: 500; color: var(--p-ink); }
+	.task-title a {
+		color: var(--p-accent);
+		font-weight: 600;
+		text-decoration: none;
+	}
+
+	.col-total {
+		text-align: right;
+		white-space: nowrap;
+		font-weight: 600;
+		font-variant-numeric: tabular-nums;
+		letter-spacing: -0.01em;
+	}
+
+	/* ---------- cumulative ---------- */
+
+	tfoot td {
+		padding-top: 8pt;
+		border-top: 1.2pt solid var(--p-ink);
+		border-bottom: 0;
+	}
+	tfoot .total-label {
+		font-size: 8pt;
+		font-weight: 600;
+		text-transform: uppercase;
+		letter-spacing: 0.12em;
+		color: var(--p-ink-3);
+	}
+	tfoot .col-total {
+		font-size: 15pt;
+		letter-spacing: -0.02em;
+	}
+
+	/* action columns carry no meaning on paper; hiding them in every
+	   row group keeps the name and total columns aligned */
 	.col-play, .col-pill, .col-remove { display: none; }
+
+	/* ---------- page breaks ---------- */
+
+	tr, figure { page-break-inside: avoid; break-inside: avoid; }
 }

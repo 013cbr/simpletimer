@@ -24,6 +24,14 @@ function loadJiraSubdomain() {
 	return '';
 }
 
+function loadDayGoal() {
+	const stored = parseFloat(localStorage.getItem('simpletimer.dayGoalHours'));
+	return Number.isFinite(stored) && stored > 0 ? stored : 8;
+}
+
+// radius of the header goal ring, kept in sync with the <circle r> in index.html
+const GOAL_RING_CIRCUMFERENCE = 2 * Math.PI * 17;
+
 var app = new Vue({
 	// app initial state
 	data: {
@@ -43,6 +51,8 @@ var app = new Vue({
 		startedAt: 0,
 		jiraSubdomain: loadJiraSubdomain(),
 		jiraSubdomainDraft: '',
+		dayGoalHours: loadDayGoal(),
+		dayGoalDraft: '',
 		settingsOpen: false
 	},
 	computed: {
@@ -54,6 +64,43 @@ var app = new Vue({
 		jiraUrlPreview: function () {
 			const sub = this.jiraSubdomainDraft.trim();
 			return sub ? 'https://' + sub + '.atlassian.net/browse/' : '';
+		},
+		// live day total — includes the session currently running, so the goal
+		// ring keeps creeping up instead of only jumping on stop
+		totalSeconds: function () {
+			var sum = 0;
+			this.tasks.forEach(function (task) {
+				sum += task.secondsSpent;
+			});
+			return sum + (this.timedTask ? this.elapsedSeconds : 0);
+		},
+		dayGoalSeconds: function () {
+			return this.dayGoalHours * 3600;
+		},
+		// 0..1 — first lap of the goal ring
+		goalFraction: function () {
+			if (this.dayGoalSeconds <= 0) return 0;
+			return Math.min(this.totalSeconds / this.dayGoalSeconds, 1);
+		},
+		// 0..1 — anything beyond the goal, drawn as a second lap on top
+		goalOvertimeFraction: function () {
+			if (this.dayGoalSeconds <= 0) return 0;
+			return Math.min(Math.max(this.totalSeconds / this.dayGoalSeconds - 1, 0), 1);
+		},
+		goalOffset: function () {
+			return GOAL_RING_CIRCUMFERENCE * (1 - this.goalFraction);
+		},
+		goalOvertimeOffset: function () {
+			return GOAL_RING_CIRCUMFERENCE * (1 - this.goalOvertimeFraction);
+		},
+		goalProgressReadable: function () {
+			return this.formatSecondsAsHM(this.totalSeconds) + ' / ' + this.formatSecondsAsHM(this.dayGoalSeconds);
+		},
+		goalTitle: function () {
+			var remaining = this.dayGoalSeconds - this.totalSeconds;
+			return remaining > 0
+				? this.formatSecondsAsReadable(remaining, false) + ' to go'
+				: this.formatSecondsAsReadable(-remaining, false) + ' over';
 		},
 		// HH:MM (zero-padded) for the focus-screen readout
 		focusReadable: function () {
@@ -226,6 +273,13 @@ var app = new Vue({
                 : hours + 'h ' + minutes + 'm';
 		},
 
+		// H:MM — compact form used by the day-goal readout
+		formatSecondsAsHM: function (secondsToFormat) {
+			var hours = Math.floor(secondsToFormat / 3600);
+			var minutes = Math.floor((secondsToFormat % 3600) / 60);
+			return hours + ':' + (minutes < 10 ? '0' + minutes : minutes);
+		},
+
         formatAsJiraLink: function (title) {
             if (!this.jiraBaseUrl) {
                 return title;
@@ -239,12 +293,21 @@ var app = new Vue({
 
         openSettings: function () {
             this.jiraSubdomainDraft = this.jiraSubdomain;
+            this.dayGoalDraft = this.dayGoalHours;
             this.settingsOpen = true;
         },
 
         saveSettings: function () {
             this.jiraSubdomain = this.jiraSubdomainDraft.trim();
             localStorage.setItem('simpletimer.jiraSubdomain', this.jiraSubdomain);
+
+            // fall back to the default rather than letting a blank or bogus
+            // value collapse the ring
+            var goal = parseFloat(this.dayGoalDraft);
+            if (!Number.isFinite(goal) || goal <= 0) goal = 8;
+            this.dayGoalHours = Math.min(goal, 24);
+            localStorage.setItem('simpletimer.dayGoalHours', this.dayGoalHours);
+
             this.settingsOpen = false;
         },
 

@@ -28,7 +28,35 @@
 
 		<header class="app-header">
 			<span class="date">{{ todaysDate }} <span class="week">· wk {{ todaysWeek }}</span></span>
+			<span class="print-only print-goal" v-if="tasks.length">day goal · {{ goalProgressReadable }}</span>
 			<div class="header-actions no-print">
+				<div class="goal-inline" v-if="tasks.length" :title="goalTitle" v-cloak>
+					<div class="goal-ring-wrap">
+						<svg class="goal-ring" viewBox="0 0 42 42" aria-hidden="true">
+							<defs>
+								<linearGradient id="goal-grad" x1="0" y1="0" x2="1" y2="1">
+									<stop offset="0%"   stop-color="#F58A66"/>
+									<stop offset="100%" stop-color="#DC5934"/>
+								</linearGradient>
+							</defs>
+							<circle class="goal-track" cx="21" cy="21" r="17"></circle>
+							<circle class="goal-progress" cx="21" cy="21" r="17"
+							        :style="{ strokeDashoffset: goalOffset }"></circle>
+							<!-- second lap for overtime; the casing lifts it off the
+							     completed ring underneath so it stays readable -->
+							<circle class="goal-casing" cx="21" cy="21" r="17"
+							        v-if="goalOvertimeFraction > 0"
+							        :style="{ strokeDashoffset: goalOvertimeOffset }"></circle>
+							<circle class="goal-overtime" cx="21" cy="21" r="17"
+							        v-if="goalOvertimeFraction > 0"
+							        :style="{ strokeDashoffset: goalOvertimeOffset }"></circle>
+						</svg>
+					</div>
+					<div class="goal-text">
+						<span class="goal-top">{{ goalProgressReadable }}</span>
+						<span class="goal-sub">day goal</span>
+					</div>
+				</div>
 				<div class="settings-wrap">
 					<button class="icon-btn" @click="openSettings()" aria-label="settings">
 						<i class="material-icons" aria-hidden="true">settings</i>
@@ -47,6 +75,16 @@
 						       @keyup.esc="closeSettings()">
 						<div class="settings-preview" v-if="jiraUrlPreview">{{ jiraUrlPreview }}</div>
 						<div class="settings-preview settings-preview--empty" v-else>Tickets will not be linked</div>
+
+						<label class="settings-label settings-label--spaced" for="day-goal-input">Day goal</label>
+						<input id="day-goal-input" type="number" class="settings-input"
+						       v-model="dayGoalDraft"
+						       min="0.25" max="24" step="0.25"
+						       placeholder="8"
+						       @keyup.enter="saveSettings()"
+						       @keyup.esc="closeSettings()">
+						<div class="settings-preview">Hours per day, used for the ring</div>
+
 						<div class="settings-actions">
 							<button class="btn-ghost" @click="closeSettings()">cancel</button>
 							<button class="btn-primary" @click="saveSettings()">save</button>
