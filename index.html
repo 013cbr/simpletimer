@@ -125,7 +125,9 @@
 		<div class="viewport" :class="'viewport--' + viewMode">
 			<div class="track">
 
-				<section class="view tasks-view">
+				<!-- inert on the half that has slid out of view: overflow: clip only stops
+				     it being painted, it stays focusable and audible to a screen reader -->
+				<section class="view tasks-view" :inert="viewMode === 'focus'">
 					<section class="tasks" v-show="tasks.length" v-cloak>
 						<table>
 							<thead>
@@ -198,7 +200,8 @@
 					</div>
 				</section>
 
-				<section class="view focus-view no-print" v-if="timedTask">
+				<section class="view focus-view no-print" v-if="timedTask"
+				         :inert="viewMode === 'tasks'">
 					<div class="focus-stage">
 						<div class="focus-total">Total — {{ totalReadable }}</div>
 						<div class="ring-wrap ring-wrap--lg">

@@ -54,6 +54,11 @@ function applyTheme(id) {
 	if (theme && meta) meta.setAttribute('content', theme.meta);
 }
 
+// Task ids must never be derived from the list length: after a removal the next
+// id would collide with an existing one, and Vue uses id as the :key — two rows
+// sharing a key means it can reuse the wrong DOM node.
+let nextTaskId = 0;
+
 function loadDayGoal() {
 	const stored = parseFloat(localStorage.getItem('simpletimer.dayGoalHours'));
 	return Number.isFinite(stored) && stored > 0 ? stored : 8;
@@ -187,9 +192,8 @@ var app = new Vue({
 			if (!value) {
 			  return;
 			}
-			var key = this.tasks.length;
 			this.tasks.push({
-			  id: key,
+			  id: nextTaskId++,
 			  title: value,
 			  secondsSpent: 0,
 			  timeSpentReadable: ''
@@ -225,6 +229,12 @@ var app = new Vue({
 
 			var confirmation = confirm(question);
 			if (confirmation) {
+				// stop the clock first — leaving timedTask pointing at a removed task
+				// keeps the focus view ticking on something no list holds any more,
+				// and its elapsed time would be written to that orphan
+				if (task === this.timedTask) {
+					this.stopTimer();
+				}
 				this.tasks.splice(this.tasks.indexOf(task), 1);
 			}
 
