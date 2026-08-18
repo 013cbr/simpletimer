@@ -140,8 +140,8 @@ var app = new Vue({
 					id: task.id,
 					title: task.title,
 					colour: self.taskColour(task),
-					width: task.secondsSpent / scale * 100 + '%',
-					readable: self.formatSecondsAsReadable(task.secondsSpent, false)
+					width: self.liveSeconds(task) / scale * 100 + '%',
+					readable: self.formatSecondsAsReadable(self.liveSeconds(task), false)
 				};
 			});
 		},
@@ -315,12 +315,17 @@ var app = new Vue({
 		},
 
 		showPreview: function (task, key) {
+			// The buttons change secondsSpent, but the cell shows the live total, so the
+			// running session has to be carried across or the preview would contradict
+			// the number sitting next to it.
+			var opDeKlok = this.liveSeconds(task) - task.secondsSpent;
+
 			// same format as the total already in that cell, so hovering only adds the
 			// arrow and the result — it does not restyle the number you were reading
 			this.preview = {
 				id: task.id,
-				was: this.formatSecondsAsReadable(task.secondsSpent),
-				becomes: this.formatSecondsAsReadable(ADJUST[key](task.secondsSpent))
+				was: this.formatSecondsAsReadable(this.liveSeconds(task)),
+				becomes: this.formatSecondsAsReadable(ADJUST[key](task.secondsSpent) + opDeKlok)
 			};
 		},
 
@@ -333,19 +338,76 @@ var app = new Vue({
 			return this.preview && this.preview.id === task.id ? this.preview : null;
 		},
 
-		startTimer: function (task) {
-			if (null == this.timedTask) {
-				this.timedTask = task;
-				this.timerRunning = true;
-				this.viewMode = 'focus';
-				this.startedAt = Date.now();
-				this.elapsedSeconds = 0;
-				this.timerReadable = '0h 0m';
+		// Which view is showing is no longer tied to whether the clock runs, so these
+		// two are plain navigation.
+		showList: function () {
+			this.viewMode = 'tasks';
+		},
 
-				this.timerInterval = setInterval(this.updateTimer, 500);
-			} else {
-				console.warn('another task is already using the timer');
+		showTimer: function () {
+			if (this.timedTask) {
+				this.viewMode = 'focus';
 			}
+		},
+
+		// only the running row's live total is a way back into the timer
+		openTimerFor: function (task) {
+			if (this.isRunning(task)) {
+				this.showTimer();
+			}
+		},
+
+		isRunning: function (task) {
+			return this.timerRunning && task === this.timedTask;
+		},
+
+		// what the row shows: the stored total plus the session still on the clock
+		liveSeconds: function (task) {
+			return task.secondsSpent + (this.isRunning(task) ? this.elapsedSeconds : 0);
+		},
+
+		taskTotalReadable: function (task) {
+			return this.formatSecondsAsReadable(this.liveSeconds(task));
+		},
+
+		// Write the running session onto its task and stop counting, without deciding
+		// which view should show — both stopTimer and a switch to another task need
+		// exactly this much. elapsedSeconds is deliberately left alone so the focus
+		// view can finish sliding out with its readout intact.
+		commitTimer: function () {
+			if (!this.timerRunning) {
+				return;
+			}
+			var ranForSeconds = Math.floor((Date.now() - this.startedAt) / 1000);
+			this.timedTask.secondsSpent += ranForSeconds;
+			this.timedTask.timeSpentReadable = this.formatSecondsAsReadable(this.timedTask.secondsSpent);
+
+			this.timerRunning = false;
+			clearInterval(this.timerInterval);
+			this.timerInterval = null;
+
+			this.updateTotal();
+		},
+
+		startTimer: function (task) {
+			// already this task: just go and look at it
+			if (this.isRunning(task)) {
+				this.showTimer();
+				return;
+			}
+
+			// pressing play on another row switches instead of being ignored, which is
+			// what it used to do — a console.warn and nothing else
+			this.commitTimer();
+
+			this.timedTask = task;
+			this.timerRunning = true;
+			this.viewMode = 'focus';
+			this.startedAt = Date.now();
+			this.elapsedSeconds = 0;
+			this.timerReadable = '0h 0m';
+
+			this.timerInterval = setInterval(this.updateTimer, 500);
 		},
 
 		updateTimer: function () {
@@ -455,33 +517,25 @@ var app = new Vue({
         },
 
 		stopTimer: function () {
-			if (null != this.timedTask) {
-				// stop counting immediately; timedTask and elapsedSeconds stay put
-				// until the slide-out finishes
-				this.timerRunning = false;
+			if (null == this.timedTask) {
+				return;
+			}
 
-				var ranForSeconds = Math.floor((Date.now() - this.startedAt) / 1000);
-				//console.log('task ran for ' + ranForSeconds + 's -- STOPPED');
+			this.commitTimer();
+			this.viewMode = 'tasks';
 
-				this.timedTask.secondsSpent += ranForSeconds;
-				this.timedTask.timeSpentReadable = this.formatSecondsAsReadable(this.timedTask.secondsSpent);
-
-				// clear the ticking interval and trigger the slide back
-				clearInterval(this.timerInterval);
-				this.viewMode = 'tasks';
-
-				// keep the focus view rendered until the slide finishes,
-				// so it slides out instead of vanishing
-				var self = this;
-				setTimeout(function () {
+			// keep the focus view rendered until the slide finishes, so it slides out
+			// instead of vanishing. The guard matters: starting another timer inside
+			// those 320ms must not have its task wiped by this callback.
+			var self = this;
+			setTimeout(function () {
+				if (!self.timerRunning) {
 					self.timedTask = null;
 					self.startedAt = 0;
 					self.elapsedSeconds = 0;
 					self.timerReadable = '';
-				}, 320);
-			}
-
-			this.updateTotal();
+				}
+			}, 320);
 		},
 
 		updateTotal: function () {
@@ -505,6 +559,17 @@ var app = new Vue({
 			window.print();
 		},
 	},	// end of methods
+
+	mounted: function () {
+		// Escape leaves the focus view without stopping the clock. Bound on the
+		// document because the focus view holds no focus of its own.
+		var self = this;
+		document.addEventListener('keydown', function (event) {
+			if (event.key === 'Escape' && self.viewMode === 'focus' && !self.settingsOpen) {
+				self.showList();
+			}
+		});
+	},
 
 	directives: {
 		'todo-focus': function (el, binding) {

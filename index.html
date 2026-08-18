@@ -144,7 +144,7 @@
 								<tr v-for="task in tasks"
 								    class="task"
 								    :key="task.id"
-								    :class="{ 'task--running': task == timedTask,
+								    :class="{ 'task--running': isRunning(task),
 								              'task--dragging': task == draggedTask }"
 								    @dragenter="dragOver(task)"
 								    @dragover.prevent>
@@ -159,14 +159,18 @@
 										</span>
 									</td>
 									<td class="col-play no-print">
-										<button class="play-btn" @click="startTimer(task)" aria-label="start timer">
-											<i class="material-icons" aria-hidden="true">play_arrow</i>
+										<button class="play-btn"
+										        @click="isRunning(task) ? stopTimer() : startTimer(task)"
+										        :aria-label="isRunning(task) ? 'stop timer' : 'start timer'">
+											<i class="material-icons" aria-hidden="true">{{ isRunning(task) ? 'stop' : 'play_arrow' }}</i>
 										</button>
 									</td>
 									<td class="col-title">
 										<span class="task-dot" aria-hidden="true"
 										      v-show="task != editedTask"
 										      :style="{ background: taskColour(task) }"></span><span
+										      class="running-pulse" aria-hidden="true"
+										      v-if="isRunning(task) && task != editedTask"></span><span
 										      v-show="task != editedTask"
 										      class="task-title"
 										      @dblclick="editTask(task)"
@@ -188,7 +192,9 @@
 											<span class="total-arrow" aria-hidden="true">→</span>
 											<span class="total-now">{{ previewFor(task).becomes }}</span>
 										</span>
-										<span v-else>{{ task.timeSpentReadable }}</span>
+										<span v-else
+										      :class="{ 'total-live': isRunning(task) }"
+										      @click="openTimerFor(task)">{{ taskTotalReadable(task) }}</span>
 									</td>
 									<td class="col-pill no-print">
 										<div class="pill" role="group" aria-label="adjust time"
@@ -273,6 +279,10 @@
 				<section class="view focus-view no-print" v-if="timedTask"
 				         :inert="viewMode === 'tasks'">
 					<div class="focus-stage">
+						<!-- leaves the timer running; Escape does the same -->
+						<button class="back-btn" @click="showList()" aria-label="back to the task list">
+							<i class="material-icons" aria-hidden="true">chevron_left</i>
+						</button>
 						<div class="focus-total">Total — {{ totalLiveReadable }} · goal {{ formatSecondsAsHM(dayGoalSeconds) }}</div>
 						<div class="ring-wrap ring-wrap--lg">
 							<svg class="ring" viewBox="0 0 240 240" aria-hidden="true">

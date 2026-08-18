@@ -492,7 +492,28 @@ a:hover { text-decoration: underline; }
 
 /* ---------- focus view ---------- */
 
+/* way back to the list that leaves the clock running. Anchored to the view rather
+   than the stage: the stage is a centred column that is nudged upward, so its left
+   edge sits against the ring instead of the corner of the screen. */
+.back-btn {
+    position: absolute;
+    left: var(--s2);
+    top: var(--s2);
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--ink-2);
+    background: var(--surface-2);
+    transition: background 200ms ease, color 200ms ease;
+}
+.back-btn:hover { background: var(--separator-2); color: var(--ink); }
+.back-btn .material-icons { font-size: 20px; }
+
 .focus-view {
+    position: relative;
     align-items: center;
     justify-content: center;
     min-height: calc(100vh - 140px);
@@ -879,6 +900,33 @@ tfoot .col-total {
     letter-spacing: -0.02em;
 }
 
+/* ---------- running task in the list ---------- */
+
+/* the clock keeps running while the list is showing, so the row has to say so on
+   its own: a pulsing dot, and a total that ticks in the accent colour */
+.running-pulse {
+    display: inline-block;
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--accent);
+    margin-right: 8px;
+    vertical-align: 1px;
+    flex: none;
+    animation: running-pulse 1.6s ease-in-out infinite;
+}
+@keyframes running-pulse {
+    0%, 100% { opacity: 1; }
+    50%      { opacity: 0.3; }
+}
+
+/* the live total doubles as the way back into the timer */
+.total-live {
+    color: var(--accent);
+    cursor: pointer;
+}
+.total-live:hover { text-decoration: underline; }
+
 /* ---------- task colour dot + day bar ---------- */
 
 .task-dot {
@@ -1045,6 +1093,7 @@ tfoot .col-total {
 /* ---------- reduced motion ---------- */
 
 @media (prefers-reduced-motion: reduce) {
+    .running-pulse       { animation: none; }
     .ring-progress       { animation: none; stroke-dashoffset: 98; }
     .ring-progress-inner { animation: none; stroke-dashoffset: 87; }
     .play-btn:active,
